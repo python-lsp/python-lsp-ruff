@@ -18,6 +18,9 @@ dependencies = [
   "python-lsp-server",
 ]
 
+[project.optional-dependencies]
+dev = ["pytest", "pre-commit"]
+
 [project.entry-points.pylsp]
 pylsp_ruff = "pylsp_ruff.ruff_lint"
 
