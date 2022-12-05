@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "python-lsp-ruff"
+authors = [
+  {name = "Julian Hossbach", email = "julian.hossbach@gmx.de"}
+]
+version = "1.0.0"
+description = "Ruff linting plugin for pylsp"
+readme = "README.md"
+requires-python = ">=3.7"
+license = {text = "MIT"}
+dependencies = [
+  "tomli; python_version<'3.11'",
+  "ruff",
+  "python-lsp-server",
+]
+
+[project.entry-points.pylsp]
+pylsp_ruff = "pylsp_ruff.ruff_lint"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+
+[tool.black]
+target-version = ['py36', 'py37', 'py38', 'py39', 'py310', 'py311']
+line-length = 88
