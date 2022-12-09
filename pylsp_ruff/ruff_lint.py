@@ -183,10 +183,8 @@ def build_args(document: Document, options: dict) -> list:
     -------
     List containing the arguments.
     """
-    # Use stdin
-    args = ["-"]
     # Suppress update announcements
-    args.extend(["--quiet"])
+    args = ["--quiet"]
     # Use the json formatting for easier evaluation
     args.extend(["--format=json"])
 
@@ -208,6 +206,8 @@ def build_args(document: Document, options: dict) -> list:
         else:
             arg = "--{}={}".format(arg_name, arg_val)
         args.append(arg)
+
+    args.extend(["--", "-"])
 
     return args
 
