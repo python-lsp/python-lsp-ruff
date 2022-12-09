@@ -146,10 +146,11 @@ exclude = [
     call_args = popen_mock.call_args[0][0]
     assert call_args == [
         "ruff",
-        "-",
         "--quiet",
         "--format=json",
         "--exclude=blah,file_2.py",
+        "--",
+        "-",
     ]
 
     os.unlink(os.path.join(workspace.root_path, "pyproject.toml"))
