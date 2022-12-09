@@ -51,7 +51,8 @@ def pylsp_settings():
 
 @hookimpl
 def pylsp_lint(workspace: Workspace, document: Document) -> list:
-    """Register ruff as the linter
+    """
+    Register ruff as the linter.
 
     Parameters
     ----------
@@ -62,7 +63,7 @@ def pylsp_lint(workspace: Workspace, document: Document) -> list:
 
     Returns
     -------
-    list of dicts containing the diagnostics.
+    List of dicts containing the diagnostics.
     """
     config = workspace._config
     settings = config.plugin_settings("ruff", document_path=document.path)
@@ -77,20 +78,21 @@ def pylsp_lint(workspace: Workspace, document: Document) -> list:
 
 
 def run_ruff_lint(ruff_executable: str, document: Document, arguments: list) -> str:
-    """Run ruff on the given document and the given arguments.
+    """
+    Run ruff on the given document and the given arguments.
 
     Parameters
     ----------
-        ruff_executable : str
-            Path to the executable.
-        document : pylsp.workspace.Document
-            File to run ruff on.
-        arguments : list
-            Arguments to provide for ruff.
+    ruff_executable : str
+        Path to the executable.
+    document : pylsp.workspace.Document
+        File to run ruff on.
+    arguments : list
+        Arguments to provide for ruff.
 
     Returns
     -------
-        str containing the result in json format.
+    String containing the result in json format.
     """
     log.debug(f"Calling {ruff_executable} with args: {arguments} on '{document.path}'")
     try:
@@ -110,17 +112,19 @@ def run_ruff_lint(ruff_executable: str, document: Document, arguments: list) -> 
 
 
 def parse_ruff_stdout(stdout: str) -> list:
-    """Convert the stdout to a list of python dicts.
+    """
+    Convert the ruff stdout to a list of Python dicts.
 
     See the flake8 implementation for the resulting format of the dicts.
 
     Parameters
     ----------
     stdout : str
+        Standard output of the ruff process.
 
     Returns
     -------
-    list of dicts containing the diagnostics.
+    List of dicts containing the diagnostics.
     """
     result_list = []
 
@@ -165,17 +169,19 @@ def parse_ruff_stdout(stdout: str) -> list:
 
 
 def build_args(document: Document, options: dict) -> list:
-    """Build arguments for ruff.
+    """
+    Build arguments for ruff.
 
     Parameters
     ----------
     document : pylsp.workspace.Document
+        Document to apply ruff on.
     options : dict
         Dict of arguments to pass to ruff.
 
     Returns
     -------
-    list containing the arguments.
+    List containing the arguments.
     """
     # Use stdin
     args = ["-"]
@@ -207,7 +213,8 @@ def build_args(document: Document, options: dict) -> list:
 
 
 def load_config(workspace: Workspace, document: Document) -> dict:
-    """Load the settings from the pyproject.toml in the project path.
+    """
+    Load settings from pyproject.toml file in the project path.
 
     Parameters
     ----------
@@ -218,7 +225,7 @@ def load_config(workspace: Workspace, document: Document) -> dict:
 
     Returns
     -------
-    dict containing the settings to use when calling ruff.
+    Dictionary containing the settings to use when calling ruff.
     """
     config = workspace._config
     _settings = config.plugin_settings("ruff", document_path=document.path)
