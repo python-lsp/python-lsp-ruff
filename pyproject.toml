@@ -24,6 +24,10 @@ dev = ["pytest", "pre-commit"]
 [project.entry-points.pylsp]
 pylsp_ruff = "pylsp_ruff.ruff_lint"
 
+[project.urls]
+"Homepage" = "https://github.com/python-lsp/python-lsp-ruff"
+"Bug Tracker" = "https://github.com/python-lsp/python-lsp-ruff/issues"
+
 [tool.pytest.ini_options]
 pythonpath = ["."]
 
