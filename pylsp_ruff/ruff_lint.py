@@ -115,7 +115,7 @@ def parse_ruff_stdout(stdout: str) -> list:
     """
     Convert the ruff stdout to a list of Python dicts.
 
-    See the flake8 implementation for the resulting format of the dicts.
+    See the flake8 implementation for the resulting format of dicts.
 
     Parameters
     ----------
