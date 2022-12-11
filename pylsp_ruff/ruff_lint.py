@@ -1,21 +1,11 @@
 import json
 import logging
-import sys
 from pathlib import PurePath
 from subprocess import PIPE, Popen, SubprocessError
 
 from pylsp import hookimpl, lsp
 from pylsp._utils import find_parents
 from pylsp.workspace import Document, Workspace
-
-# Use built-in tomllib for python>=3.11
-if sys.version_info >= (3, 11):
-    try:
-        import tomllib
-    except ImportError:
-        import tomli as tomllib
-else:
-    import tomli as tomllib
 
 log = logging.getLogger(__name__)
 
@@ -232,36 +222,38 @@ def load_config(workspace: Workspace, document: Document) -> dict:
     config = workspace._config
     _settings = config.plugin_settings("ruff", document_path=document.path)
 
-    # Default values are given by ruff
-    settings = {
-        "config": _settings.get("config", None),
-        "exclude": _settings.get("exclude", None),
-        "executable": _settings.get("executable", "ruff"),
-        "ignore": _settings.get("ignore", None),
-        "line-length": _settings.get("lineLength", None),
-        "per-file-ignores": _settings.get("perFileIgnores", None),
-        "select": _settings.get("select", None),
-    }
-
     pyproject_file = find_parents(
         workspace.root_path, document.path, ["pyproject.toml"]
     )
 
-    # Load config from pyproject file if it exists
+    # Check if pyproject is present, ignore user settings if toml exists
     if pyproject_file:
-        try:
-            log.debug(f"Found pyproject file: {str(pyproject_file[0])}")
+        log.debug(
+            f"Found pyproject file: {str(pyproject_file[0])}, "
+            + "skipping pylsp config."
+        )
 
-            with open(str(pyproject_file[0]), "rb") as pyproject_toml:
-                toml_dict = tomllib.load(pyproject_toml)
+        # Leave config to pyproject.toml
+        settings = {
+            "config": None,
+            "exclude": None,
+            "executable": _settings.get("executable", "ruff"),
+            "ignore": None,
+            "line-length": None,
+            "per-file-ignores": None,
+            "select": None,
+        }
 
-            toml_config = toml_dict.get("tool", {}).get("ruff", {})
-
-            # Update settings with local project settings
-            for key, value in toml_config.items():
-                settings[key] = value
-
-        except (tomllib.TOMLDecodeError, OSError) as e:
-            log.warning(f"Failed loading {str(pyproject_file)}: {e}")
+    else:
+        # Default values are given by ruff
+        settings = {
+            "config": _settings.get("config", None),
+            "exclude": _settings.get("exclude", None),
+            "executable": _settings.get("executable", "ruff"),
+            "ignore": _settings.get("ignore", None),
+            "line-length": _settings.get("lineLength", None),
+            "per-file-ignores": _settings.get("perFileIgnores", None),
+            "select": _settings.get("select", None),
+        }
 
     return settings

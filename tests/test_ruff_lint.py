@@ -116,25 +116,34 @@ def get_ruff_cfg_settings(workspace, doc, config_str):
     return ruff_lint.load_config(workspace, doc)
 
 
-def test_ruff_multiline(workspace):
+def test_ruff_config(workspace):
     config_str = r"""[tool.ruff]
+ignore = ["F481"]
 exclude = [
     "blah",
     "file_2.py"
 ]
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["F401", "E402"]
+"test_something.py" = ["E402"]
     """
 
     doc_str = "print('hi')\nimport os\n"
 
     doc_uri = uris.from_fs_path(os.path.join(workspace.root_path, "blah/__init__.py"))
     workspace.put_document(doc_uri, doc_str)
+    workspace._config.update({"plugins": {"ruff": {"select": ["E", "F"]}}})
 
     ruff_settings = get_ruff_cfg_settings(
         workspace, workspace.get_document(doc_uri), config_str
     )
 
-    assert "exclude" in ruff_settings
-    assert len(ruff_settings["exclude"]) == 2
+    # Check that user config is ignored
+    for key, value in ruff_settings.items():
+        if key == "executable":
+            assert value == "ruff"
+            continue
+        assert value is None
 
     with patch("pylsp_ruff.ruff_lint.Popen") as popen_mock:
         mock_instance = popen_mock.return_value
@@ -149,66 +158,13 @@ exclude = [
         "--quiet",
         "--format=json",
         "--no-fix",
-        "--exclude=blah,file_2.py",
         "--",
         "-",
     ]
 
-    os.unlink(os.path.join(workspace.root_path, "pyproject.toml"))
+    diags = ruff_lint.pylsp_lint(workspace, doc)
 
-
-def test_ruff_per_file_ignores(workspace):
-    config_str = r"""[tool.ruff]
-ignore = ["F403"]
-exclude = [
-    "file_1.py",
-    "file_2.py",
-]
-[tool.ruff.per-file-ignores]
-"__init__.py" = ["F401", "E402"]
-"test_something.py" = ["E402"]
-    """
-
-    doc_str = "print('hi')\nimport os\n"
-
-    doc_uri = uris.from_fs_path(os.path.join(workspace.root_path, "blah/__init__.py"))
-    workspace.put_document(doc_uri, doc_str)
-
-    ruff_settings = get_ruff_cfg_settings(
-        workspace, workspace.get_document(doc_uri), config_str
-    )
-
-    assert "per-file-ignores" in ruff_settings
-    assert len(ruff_settings["per-file-ignores"]) == 2
-    assert "exclude" in ruff_settings
-    assert len(ruff_settings["exclude"]) == 2
-
-    doc = workspace.get_document(doc_uri)
-    res = ruff_lint.pylsp_lint(workspace, doc)
-    assert not res
-
-    os.unlink(os.path.join(workspace.root_path, "pyproject.toml"))
-
-
-def test_per_file_ignores_alternative_syntax(workspace):
-    config_str = r"""[tool.ruff.per-file-ignores]
-"__init__.py" = ["F401", "E402"]
-    """
-
-    doc_str = "print('hi')\nimport os\n"
-
-    doc_uri = uris.from_fs_path(os.path.join(workspace.root_path, "blah/__init__.py"))
-    workspace.put_document(doc_uri, doc_str)
-
-    ruff_settings = get_ruff_cfg_settings(
-        workspace, workspace.get_document(doc_uri), config_str
-    )
-
-    assert "per-file-ignores" in ruff_settings
-    assert ruff_settings["per-file-ignores"] == {"__init__.py": ["F401", "E402"]}
-
-    doc = workspace.get_document(doc_uri)
-    res = ruff_lint.pylsp_lint(workspace, doc)
-    assert not res
+    for diag in diags:
+        assert diag["code"] != "F841"
 
     os.unlink(os.path.join(workspace.root_path, "pyproject.toml"))
