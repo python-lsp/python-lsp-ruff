@@ -1,6 +1,6 @@
 # python-lsp-ruff
 
-[![PyPi](https://img.shields.io/pypi/v/python-lsp-ruff.svg)](https://pypi.org/project/python-lsp-ruff/1.0.0/)
+[![PyPi](https://img.shields.io/pypi/v/python-lsp-ruff.svg)](https://pypi.org/project/python-lsp-ruff)
 [![Python](https://github.com/python-lsp/python-lsp-ruff/actions/workflows/python.yml/badge.svg)](https://github.com/python-lsp/python-lsp-ruff/actions/workflows/python.yml)
 
 Linter plugin for pylsp based using ruff.
@@ -23,6 +23,8 @@ When enabled, all linting diagnostics will be provided by `ruff`.
 
 Configuration options can be passed to the python-language-server. If a `pyproject.toml`
 file is present in the project, `python-lsp-ruff` will use these configuration options.
+Note that any configuration options passed to ruff via `pylsp` are ignored if the project has
+a `pyproject.toml`.
 
 The plugin follows [python-lsp-server's
 configuration](https://github.com/python-lsp/python-lsp-server/#configuration). These are
