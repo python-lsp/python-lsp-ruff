@@ -148,6 +148,7 @@ exclude = [
         "ruff",
         "--quiet",
         "--format=json",
+        "--no-fix",
         "--exclude=blah,file_2.py",
         "--",
         "-",

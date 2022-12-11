@@ -187,6 +187,8 @@ def build_args(document: Document, options: dict) -> list:
     args = ["--quiet"]
     # Use the json formatting for easier evaluation
     args.extend(["--format=json"])
+    # Do not attempt to fix -> returns file instead of diagnostics
+    args.extend(["--no-fix"])
 
     # Convert per-file-ignores dict to right format
     per_file_ignores = options.pop("per-file-ignores")
