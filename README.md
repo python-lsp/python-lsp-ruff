@@ -14,6 +14,8 @@ In the same `virtualenv` as `python-lsp-server`:
 pip install python-lsp-ruff
 ```
 
+There also exists an [AUR package](https://aur.archlinux.org/python-lsp-ruff.git).
+
 # Usage
 
 This plugin will disable `flake8` and `pycodestyle` by default.
