@@ -38,7 +38,6 @@ def temp_document(doc_text, workspace):
         name = temp_file.name
         temp_file.write(doc_text)
     doc = Document(uris.from_fs_path(name), workspace)
-
     return name, doc
 
 
@@ -118,21 +117,24 @@ def get_ruff_cfg_settings(workspace, doc, config_str):
 
 def test_ruff_config(workspace):
     config_str = r"""[tool.ruff]
-ignore = ["F481"]
+ignore = ["F841"]
 exclude = [
-    "blah",
+    "blah/__init__.py",
     "file_2.py"
 ]
 [tool.ruff.per-file-ignores]
-"__init__.py" = ["F401", "E402"]
-"test_something.py" = ["E402"]
-    """
+"test_something.py" = ["F401"]
+"""
 
-    doc_str = "print('hi')\nimport os\n"
+    doc_str = r"""
+print('hi')
+import os
+def f():
+    a = 2
+"""
 
-    doc_uri = uris.from_fs_path(os.path.join(workspace.root_path, "blah/__init__.py"))
+    doc_uri = uris.from_fs_path(os.path.join(workspace.root_path, "__init__.py"))
     workspace.put_document(doc_uri, doc_str)
-    workspace._config.update({"plugins": {"ruff": {"select": ["E", "F"]}}})
 
     ruff_settings = get_ruff_cfg_settings(
         workspace, workspace.get_document(doc_uri), config_str
@@ -150,7 +152,7 @@ exclude = [
         mock_instance.communicate.return_value = [bytes(), bytes()]
 
         doc = workspace.get_document(doc_uri)
-        ruff_lint.pylsp_lint(workspace, doc)
+        diags = ruff_lint.pylsp_lint(workspace, doc)
 
     call_args = popen_mock.call_args[0][0]
     assert call_args == [
@@ -158,13 +160,44 @@ exclude = [
         "--quiet",
         "--format=json",
         "--no-fix",
+        "--force-exclude",
+        "--stdin-filename",
+        os.path.join(workspace.root_path, "__init__.py"),
         "--",
         "-",
     ]
 
     diags = ruff_lint.pylsp_lint(workspace, doc)
 
+    _list = []
     for diag in diags:
-        assert diag["code"] != "F841"
+        _list.append(diag["code"])
+    # Assert that ignore is working as intended
+    assert "E402" in _list
+    assert "F841" not in _list
+
+    # Excludes
+    doc_uri = uris.from_fs_path(os.path.join(workspace.root_path, "blah/__init__.py"))
+    workspace.put_document(doc_uri, doc_str)
+
+    ruff_settings = get_ruff_cfg_settings(
+        workspace, workspace.get_document(doc_uri), config_str
+    )
+
+    doc = workspace.get_document(doc_uri)
+    diags = ruff_lint.pylsp_lint(workspace, doc)
+    assert diags == []
+
+    # For per-file-ignores
+    doc_uri_per_file_ignores = uris.from_fs_path(
+        os.path.join(workspace.root_path, "blah/test_something.py")
+    )
+    workspace.put_document(doc_uri_per_file_ignores, doc_str)
+
+    doc = workspace.get_document(doc_uri)
+    diags = ruff_lint.pylsp_lint(workspace, doc)
+
+    for diag in diags:
+        assert diag["code"] != "F401"
 
     os.unlink(os.path.join(workspace.root_path, "pyproject.toml"))
