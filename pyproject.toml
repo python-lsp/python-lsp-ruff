@@ -7,13 +7,13 @@ name = "python-lsp-ruff"
 authors = [
   {name = "Julian Hossbach", email = "julian.hossbach@gmx.de"}
 ]
-version = "1.0.2"
+version = "1.0.3"
 description = "Ruff linting plugin for pylsp"
 readme = "README.md"
 requires-python = ">=3.7"
 license = {text = "MIT"}
 dependencies = [
-  "ruff>=0.0.106",
+  "ruff>=0.0.192",
   "python-lsp-server",
 ]
 

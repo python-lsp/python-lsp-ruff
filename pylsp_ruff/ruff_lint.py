@@ -93,7 +93,6 @@ def run_ruff_lint(ruff_executable: str, document: Document, arguments: list) -> 
         # Ruff doesn't yet support calling with python -m ruff,
         # see https://github.com/charliermarsh/ruff/issues/593
         log.error(f"Error running {ruff_executable}: {e}")
-
     (stdout, stderr) = p.communicate(document.source.encode())
 
     if stderr:
@@ -179,6 +178,11 @@ def build_args(document: Document, options: dict) -> list:
     args.extend(["--format=json"])
     # Do not attempt to fix -> returns file instead of diagnostics
     args.extend(["--no-fix"])
+    # Always force excludes
+    args.extend(["--force-exclude"])
+    # Pass filename to ruff for per-file-ignores, catch unsaved
+    if document.path != "":
+        args.extend(["--stdin-filename", document.path])
 
     # Convert per-file-ignores dict to right format
     per_file_ignores = options.pop("per-file-ignores")
