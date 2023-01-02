@@ -20,7 +20,7 @@ UNNECESSITY_CODES = {
 
 @hookimpl
 def pylsp_settings():
-    # flake8 and pycodestyle disabled by default with this plugin
+    # this plugin disables flake8, mccabe, and pycodestyle by default
     return {
         "plugins": {
             "ruff": {
@@ -34,6 +34,7 @@ def pylsp_settings():
                 "select": None,
             },
             "flake8": {"enabled": False},
+            "mccabe": {"enabled": False},
             "pycodestyle": {"enabled": False},
         }
     }
