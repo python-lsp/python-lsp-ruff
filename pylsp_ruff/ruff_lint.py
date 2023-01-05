@@ -33,6 +33,7 @@ def pylsp_settings():
                 "perFileIgnores": None,
                 "select": None,
             },
+            "pyflakes": {"enabled": False},
             "flake8": {"enabled": False},
             "mccabe": {"enabled": False},
             "pycodestyle": {"enabled": False},
