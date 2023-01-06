@@ -18,7 +18,7 @@ There also exists an [AUR package](https://aur.archlinux.org/packages/python-lsp
 
 # Usage
 
-This plugin will disable `flake8`, `pycodestyle` and `mccabe` by default.
+This plugin will disable `flake8`, `pycodestyle`, `pyflakes` and `mccabe` by default.
 When enabled, all linting diagnostics will be provided by `ruff`.
 
 # Configuration
