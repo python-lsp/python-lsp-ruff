@@ -91,15 +91,16 @@ def run_ruff_lint(ruff_executable: str, document: Document, arguments: list) -> 
         cmd = [ruff_executable]
         cmd.extend(arguments)
         p = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    except SubprocessError as e:
+        (stdout, stderr) = p.communicate(document.source.encode())
+
+        if stderr:
+            log.error(f"Error running ruff: {stderr.decode()}")
+
+        return stdout.decode()
+    except FileNotFoundError as e:
         # Ruff doesn't yet support calling with python -m ruff,
         # see https://github.com/charliermarsh/ruff/issues/593
         log.error(f"Error running {ruff_executable}: {e}")
-    (stdout, stderr) = p.communicate(document.source.encode())
-
-    if stderr:
-        log.error(f"Error running ruff: {stderr.decode()}")
-    return stdout.decode()
 
 
 def parse_ruff_stdout(stdout: str) -> list:
