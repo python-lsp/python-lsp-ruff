@@ -1,7 +1,7 @@
 import json
 import logging
 from pathlib import PurePath
-from subprocess import PIPE, Popen, SubprocessError
+from subprocess import PIPE, Popen
 
 from pylsp import hookimpl, lsp
 from pylsp._utils import find_parents
@@ -101,6 +101,8 @@ def run_ruff_lint(ruff_executable: str, document: Document, arguments: list) -> 
         # Ruff doesn't yet support calling with python -m ruff,
         # see https://github.com/charliermarsh/ruff/issues/593
         log.error(f"Error running {ruff_executable}: {e}")
+
+        return ""
 
 
 def parse_ruff_stdout(stdout: str) -> list:
