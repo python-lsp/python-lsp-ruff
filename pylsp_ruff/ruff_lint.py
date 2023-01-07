@@ -97,7 +97,7 @@ def run_ruff_lint(ruff_executable: str, document: Document, arguments: list) -> 
             log.error(f"Error running ruff: {stderr.decode()}")
 
         return stdout.decode()
-    except FileNotFoundError as e:
+    except Exception as e:
         # Ruff doesn't yet support calling with python -m ruff,
         # see https://github.com/charliermarsh/ruff/issues/593
         log.error(f"Error running {ruff_executable}: {e}")
