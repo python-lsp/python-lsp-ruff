@@ -1,5 +1,6 @@
 import json
 import logging
+import sys
 from pathlib import PurePath
 from subprocess import PIPE, Popen
 
@@ -91,18 +92,19 @@ def run_ruff_lint(ruff_executable: str, document: Document, arguments: list) -> 
         cmd = [ruff_executable]
         cmd.extend(arguments)
         p = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-        (stdout, stderr) = p.communicate(document.source.encode())
+    except Exception:
+        log.debug(
+            f"Can't execute {ruff_executable}. Trying with '{sys.executable} -m ruff'"
+        )
+        cmd = [sys.executable, "-m", "ruff"]
+        cmd.extend(arguments)
+        p = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    (stdout, stderr) = p.communicate(document.source.encode())
 
-        if stderr:
-            log.error(f"Error running ruff: {stderr.decode()}")
+    if stderr:
+        log.error(f"Error running ruff: {stderr.decode()}")
 
-        return stdout.decode()
-    except Exception as e:
-        # Ruff doesn't yet support calling with python -m ruff,
-        # see https://github.com/charliermarsh/ruff/issues/593
-        log.error(f"Error running {ruff_executable}: {e}")
-
-        return ""
+    return stdout.decode()
 
 
 def parse_ruff_stdout(stdout: str) -> list:
