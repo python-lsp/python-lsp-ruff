@@ -40,3 +40,6 @@ the valid configuration keys:
  - `pylsp.plugins.ruff.lineLength`: Set the line-length for length checks.
  - `pylsp.plugins.ruff.perFileIgnores`: File-specific error codes to be ignored.
  - `pylsp.plugins.ruff.select`: List of error codes to enable.
+ - `pylsp.plugins.ruff.extendSelect`: Same as select, but append to existing error codes.
+
+For more information on the configuration visit [Ruff's homepage](https://beta.ruff.rs/docs/configuration/).
