@@ -77,12 +77,15 @@ def test_ruff_config_param(workspace):
         mock_instance = popen_mock.return_value
         mock_instance.communicate.return_value = [bytes(), bytes()]
         ruff_conf = "/tmp/pyproject.toml"
-        workspace._config.update({"plugins": {"ruff": {"config": ruff_conf}}})
+        workspace._config.update(
+            {"plugins": {"ruff": {"config": ruff_conf, "extendSelect": ["D", "F"]}}}
+        )
         _name, doc = temp_document(DOC, workspace)
         ruff_lint.pylsp_lint(workspace, doc)
         (call_args,) = popen_mock.call_args[0]
         assert "ruff" in call_args
         assert f"--config={ruff_conf}" in call_args
+        assert "--extend-select=D,F" in call_args
 
 
 def test_ruff_executable_param(workspace):
@@ -122,6 +125,7 @@ exclude = [
     "blah/__init__.py",
     "file_2.py"
 ]
+extend-select = ["D"]
 [tool.ruff.per-file-ignores]
 "test_something.py" = ["F401"]
 """
@@ -172,8 +176,10 @@ def f():
     _list = []
     for diag in diags:
         _list.append(diag["code"])
-    # Assert that ignore is working as intended
+    # Assert that ignore and extend-select is working as intended
     assert "E402" in _list
+    assert "D103" in _list
+    assert "D104" in _list
     assert "F841" not in _list
 
     # Excludes

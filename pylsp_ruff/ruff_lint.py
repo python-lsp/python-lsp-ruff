@@ -33,6 +33,7 @@ def pylsp_settings():
                 "lineLength": None,
                 "perFileIgnores": None,
                 "select": None,
+                "extendSelect": None,
             },
             "pyflakes": {"enabled": False},
             "flake8": {"enabled": False},
@@ -253,6 +254,7 @@ def load_config(workspace: Workspace, document: Document) -> dict:
             "line-length": None,
             "per-file-ignores": None,
             "select": None,
+            "extend-select": None,
         }
 
     else:
@@ -265,6 +267,7 @@ def load_config(workspace: Workspace, document: Document) -> dict:
             "line-length": _settings.get("lineLength", None),
             "per-file-ignores": _settings.get("perFileIgnores", None),
             "select": _settings.get("select", None),
+            "extend-select": _settings.get("extendSelect", None),
         }
 
     return settings
