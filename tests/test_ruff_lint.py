@@ -78,7 +78,15 @@ def test_ruff_config_param(workspace):
         mock_instance.communicate.return_value = [bytes(), bytes()]
         ruff_conf = "/tmp/pyproject.toml"
         workspace._config.update(
-            {"plugins": {"ruff": {"config": ruff_conf, "extendSelect": ["D", "F"]}}}
+            {
+                "plugins": {
+                    "ruff": {
+                        "config": ruff_conf,
+                        "extendSelect": ["D", "F"],
+                        "extendIgnore": ["E"],
+                    }
+                }
+            }
         )
         _name, doc = temp_document(DOC, workspace)
         ruff_lint.pylsp_lint(workspace, doc)
@@ -86,6 +94,7 @@ def test_ruff_config_param(workspace):
         assert "ruff" in call_args
         assert f"--config={ruff_conf}" in call_args
         assert "--extend-select=D,F" in call_args
+        assert "--extend-ignore=E" in call_args
 
 
 def test_ruff_executable_param(workspace):
@@ -171,15 +180,25 @@ def f():
         "-",
     ]
 
+    workspace._config.update(
+        {
+            "plugins": {
+                "ruff": {
+                    "extendIgnore": ["D104"],
+                }
+            }
+        }
+    )
+
     diags = ruff_lint.pylsp_lint(workspace, doc)
 
     _list = []
     for diag in diags:
         _list.append(diag["code"])
-    # Assert that ignore and extend-select is working as intended
+    # Assert that ignore, extend-ignore and extend-select is working as intended
     assert "E402" in _list
     assert "D103" in _list
-    assert "D104" in _list
+    assert "D104" not in _list
     assert "F841" not in _list
 
     # Excludes

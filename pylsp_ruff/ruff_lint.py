@@ -30,6 +30,7 @@ def pylsp_settings():
                 "exclude": None,
                 "executable": "ruff",
                 "ignore": None,
+                "extendIgnore": None,
                 "lineLength": None,
                 "perFileIgnores": None,
                 "select": None,
@@ -251,10 +252,11 @@ def load_config(workspace: Workspace, document: Document) -> dict:
             "exclude": None,
             "executable": _settings.get("executable", "ruff"),
             "ignore": None,
+            "extend-ignore": _settings.get("extendIgnore", None),
             "line-length": None,
             "per-file-ignores": None,
             "select": None,
-            "extend-select": None,
+            "extend-select": _settings.get("extendSelect", None),
         }
 
     else:
@@ -264,6 +266,7 @@ def load_config(workspace: Workspace, document: Document) -> dict:
             "exclude": _settings.get("exclude", None),
             "executable": _settings.get("executable", "ruff"),
             "ignore": _settings.get("ignore", None),
+            "extend-ignore": _settings.get("extendIgnore", None),
             "line-length": _settings.get("lineLength", None),
             "per-file-ignores": _settings.get("perFileIgnores", None),
             "select": _settings.get("select", None),

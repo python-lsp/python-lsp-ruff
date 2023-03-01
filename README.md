@@ -25,8 +25,9 @@ When enabled, all linting diagnostics will be provided by `ruff`.
 
 Configuration options can be passed to the python-language-server. If a `pyproject.toml`
 file is present in the project, `python-lsp-ruff` will use these configuration options.
-Note that any configuration options passed to ruff via `pylsp` are ignored if the project has
-a `pyproject.toml`.
+Note that any configuration options (except for `extendIgnore` and `extendSelect`, see
+[this issue](https://github.com/python-lsp/python-lsp-ruff/issues/19)) passed to ruff via
+`pylsp` are ignored if the project has a `pyproject.toml`.
 
 The plugin follows [python-lsp-server's
 configuration](https://github.com/python-lsp/python-lsp-server/#configuration). These are
@@ -37,6 +38,7 @@ the valid configuration keys:
  - `pylsp.plugins.ruff.exclude`: Exclude files from being checked by `ruff`.
  - `pylsp.plugins.ruff.executable`: Path to the `ruff` executable. Assumed to be in PATH by default.
  - `pylsp.plugins.ruff.ignore`: Error codes to ignore.
+ - `pylsp.plugins.ruff.extendIgnore`: Same as ignore, but append to existing ignores.
  - `pylsp.plugins.ruff.lineLength`: Set the line-length for length checks.
  - `pylsp.plugins.ruff.perFileIgnores`: File-specific error codes to be ignored.
  - `pylsp.plugins.ruff.select`: List of error codes to enable.
