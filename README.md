@@ -1,6 +1,7 @@
 # python-lsp-ruff
 
 [![PyPi](https://img.shields.io/pypi/v/python-lsp-ruff.svg)](https://pypi.org/project/python-lsp-ruff)
+[![Anaconda](https://anaconda.org/conda-forge/python-lsp-ruff/badges/version.svg)](https://anaconda.org/conda-forge/python-lsp-ruff)
 [![Python](https://github.com/python-lsp/python-lsp-ruff/actions/workflows/python.yml/badge.svg)](https://github.com/python-lsp/python-lsp-ruff/actions/workflows/python.yml)
 
 Linter plugin for pylsp based using ruff.
