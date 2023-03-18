@@ -21,7 +21,7 @@ dependencies = [
 dev = ["pytest", "pre-commit"]
 
 [project.entry-points.pylsp]
-ruff = "pylsp_ruff.ruff_lint"
+ruff = "pylsp_ruff.plugin"
 
 [project.urls]
 "Homepage" = "https://github.com/python-lsp/python-lsp-ruff"

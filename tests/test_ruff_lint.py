@@ -10,7 +10,7 @@ from pylsp import lsp, uris
 from pylsp.config.config import Config
 from pylsp.workspace import Document, Workspace
 
-import pylsp_ruff.ruff_lint as ruff_lint
+import pylsp_ruff.plugin as ruff_lint
 
 DOC_URI = uris.from_fs_path(__file__)
 DOC = r"""import pylsp
@@ -73,7 +73,7 @@ def test_ruff_lint(workspace):
 
 
 def test_ruff_config_param(workspace):
-    with patch("pylsp_ruff.ruff_lint.Popen") as popen_mock:
+    with patch("pylsp_ruff.plugin.Popen") as popen_mock:
         mock_instance = popen_mock.return_value
         mock_instance.communicate.return_value = [bytes(), bytes()]
         ruff_conf = "/tmp/pyproject.toml"
@@ -98,7 +98,7 @@ def test_ruff_config_param(workspace):
 
 
 def test_ruff_executable_param(workspace):
-    with patch("pylsp_ruff.ruff_lint.Popen") as popen_mock:
+    with patch("pylsp_ruff.plugin.Popen") as popen_mock:
         mock_instance = popen_mock.return_value
         mock_instance.communicate.return_value = [bytes(), bytes()]
 
@@ -160,7 +160,7 @@ def f():
             continue
         assert value is None
 
-    with patch("pylsp_ruff.ruff_lint.Popen") as popen_mock:
+    with patch("pylsp_ruff.plugin.Popen") as popen_mock:
         mock_instance = popen_mock.return_value
         mock_instance.communicate.return_value = [bytes(), bytes()]
 
