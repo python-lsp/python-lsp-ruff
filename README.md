@@ -5,7 +5,7 @@
 [![Python](https://github.com/python-lsp/python-lsp-ruff/actions/workflows/python.yml/badge.svg)](https://github.com/python-lsp/python-lsp-ruff/actions/workflows/python.yml)
 
 Linter plugin for pylsp based using ruff.
-Formatting via `ruff`'s `--fix` option will be available soon.
+Formatting via `ruff`'s `--fix` is available since v1.3.0.
 
 ## Install
 
