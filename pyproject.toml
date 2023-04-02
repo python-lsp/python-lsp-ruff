@@ -31,9 +31,6 @@ ruff = "pylsp_ruff.plugin"
 [tool.pytest.ini_options]
 pythonpath = ["."]
 
-[tool.isort]
-profile = "black"
-
 [tool.black]
 target-version = ['py36', 'py37', 'py38', 'py39', 'py310', 'py311']
 line-length = 88
