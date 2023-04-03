@@ -64,6 +64,7 @@ def temp_document(doc_text, workspace):
 def test_ruff_code_actions(workspace):
     _, doc = temp_document(codeaction_str, workspace)
 
+    workspace._config.update({"plugins": {"ruff": {"select": ["F"]}}})
     diags = ruff_lint.pylsp_lint(workspace, doc)
     range_ = cattrs.unstructure(
         Range(start=Position(line=0, character=0), end=Position(line=0, character=0))
