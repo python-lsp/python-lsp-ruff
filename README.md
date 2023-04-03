@@ -44,5 +44,6 @@ the valid configuration keys:
  - `pylsp.plugins.ruff.perFileIgnores`: File-specific error codes to be ignored.
  - `pylsp.plugins.ruff.select`: List of error codes to enable.
  - `pylsp.plugins.ruff.extendSelect`: Same as select, but append to existing error codes.
+ - `pylsp.plugins.ruff.format`: List of error codes to fix during formatting.
 
 For more information on the configuration visit [Ruff's homepage](https://beta.ruff.rs/docs/configuration/).
