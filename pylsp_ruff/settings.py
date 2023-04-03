@@ -22,6 +22,8 @@ class PluginSettings:
     extend_ignore: Optional[List[str]] = None
     per_file_ignores: Optional[Dict[str, List[str]]] = None
 
+    format: Optional[List[str]] = None
+
 
 def to_camel_case(snake_str: str) -> str:
     components = snake_str.split("_")

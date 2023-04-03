@@ -4,7 +4,7 @@ import re
 import sys
 from pathlib import PurePath
 from subprocess import PIPE, Popen
-from typing import Dict, List
+from typing import Dict, Generator, List, Optional
 
 from lsprotocol.types import (
     CodeAction,
@@ -62,6 +62,34 @@ def pylsp_settings():
         }
     }
     return converter.unstructure(settings)
+
+
+@hookimpl(hookwrapper=True)
+def pylsp_format_document(workspace: Workspace, document: Document) -> Generator:
+    """
+    Provide formatting through ruff.
+
+    Parameters
+    ----------
+    workspace : pylsp.workspace.Workspace
+        Current workspace.
+    document : pylsp.workspace.Document
+        Document to apply ruff on.
+    """
+    log.debug(f"textDocument/formatting: {document}")
+    outcome = yield
+    results = outcome.get_result()
+    if results:
+        document.source = results[0]["new_text"]
+
+    new_text = run_ruff_format(workspace, document)
+    range = Range(
+        start=Position(line=0, character=0),
+        end=Position(line=len(document.lines), character=0),
+    )
+    text_edit = TextEdit(range=range, new_text=new_text)
+
+    outcome.force_result(converter.unstructure([text_edit]))
 
 
 @hookimpl
@@ -315,7 +343,23 @@ def run_ruff_fix(workspace: Workspace, document: Document) -> str:
     return result
 
 
-def run_ruff(workspace: Workspace, document: Document, fix: bool = False) -> str:
+def run_ruff_format(workspace: Workspace, document: Document) -> str:
+    settings = load_settings(workspace, document)
+    extra_arguments = []
+    if settings.format:
+        extra_arguments.append(f"--fixable={','.join(settings.format)}")
+    else:
+        extra_arguments.append("--unfixable=ALL")
+    result = run_ruff(workspace, document, fix=True, extra_arguments=extra_arguments)
+    return result
+
+
+def run_ruff(
+    workspace: Workspace,
+    document: Document,
+    fix: bool = False,
+    extra_arguments: Optional[List[str]] = None,
+) -> str:
     """
     Run ruff on the given document and the given arguments.
 
@@ -327,6 +371,8 @@ def run_ruff(workspace: Workspace, document: Document, fix: bool = False) -> str
         File to run ruff on.
     fix : bool
         Whether to run fix or no-fix.
+    extra_arguments : List[str]
+        Extra arguments to pass to ruff.
 
     Returns
     -------
@@ -334,7 +380,7 @@ def run_ruff(workspace: Workspace, document: Document, fix: bool = False) -> str
     """
     settings = load_settings(workspace, document)
     executable = settings.executable
-    arguments = build_arguments(document, settings, fix)
+    arguments = build_arguments(document, settings, fix, extra_arguments)
 
     log.debug(f"Calling {executable} with args: {arguments} on '{document.path}'")
     try:
@@ -358,6 +404,7 @@ def build_arguments(
     document: Document,
     settings: PluginSettings,
     fix: bool = False,
+    extra_arguments: Optional[List[str]] = None,
 ) -> List[str]:
     """
     Build arguments for ruff.
@@ -368,6 +415,10 @@ def build_arguments(
         Document to apply ruff on.
     settings : PluginSettings
         Settings to use for arguments to pass to ruff.
+    fix : bool
+        Whether to execute with --fix.
+    extra_arguments : List[str]
+        Extra arguments to pass to ruff.
 
     Returns
     -------
@@ -416,6 +467,9 @@ def build_arguments(
                 continue
             args.append(f"--ignore={','.join(errors)}")
 
+    if extra_arguments:
+        args.extend(extra_arguments)
+
     args.extend(["--", "-"])
 
     return args
@@ -456,6 +510,7 @@ def load_settings(workspace: Workspace, document: Document) -> PluginSettings:
             executable=plugin_settings.executable,
             extend_ignore=plugin_settings.extend_ignore,
             extend_select=plugin_settings.extend_select,
+            format=plugin_settings.format,
         )
 
     return plugin_settings

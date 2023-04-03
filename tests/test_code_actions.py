@@ -2,6 +2,7 @@
 # Copyright 2021- Python Language Server Contributors.
 
 import tempfile
+from textwrap import dedent
 from typing import List
 from unittest.mock import Mock
 
@@ -26,16 +27,20 @@ def workspace(tmp_path):
     return ws
 
 
-codeaction_str = r"""
-import os
-def f():
-    a = 2
-"""
+codeaction_str = dedent(
+    """
+    import os
+    def f():
+        a = 2
+    """
+)
 
-import_str = r"""
-import pathlib
-import os
-"""
+import_str = dedent(
+    """
+    import pathlib
+    import os
+    """
+)
 
 codeactions = [
     "Ruff (F401): Remove unused import: `os`",
@@ -103,13 +108,40 @@ def test_import_action(workspace):
 
 
 def test_fix_all(workspace):
-    _, doc = temp_document(codeaction_str, workspace)
-
-    fix_all = ruff_lint.run_ruff_fix(workspace, doc)
-    assert (
-        fix_all
-        == r"""
-def f():
-    pass
-"""
+    expected_str = dedent(
+        """
+        def f():
+            pass
+        """
     )
+    _, doc = temp_document(codeaction_str, workspace)
+    fixed_str = ruff_lint.run_ruff_fix(workspace, doc)
+    assert fixed_str == expected_str
+
+
+def test_format_document_default_settings(workspace):
+    _, doc = temp_document(import_str, workspace)
+    formatted_str = ruff_lint.run_ruff_format(workspace, doc)
+    assert formatted_str == import_str
+
+
+def test_format_document_settings(workspace):
+    expected_str = dedent(
+        """
+        import os
+        import pathlib
+        """
+    )
+    workspace._config.update(
+        {
+            "plugins": {
+                "ruff": {
+                    "select": ["I"],
+                    "format": ["I001"],
+                }
+            }
+        }
+    )
+    _, doc = temp_document(import_str, workspace)
+    formatted_str = ruff_lint.run_ruff_format(workspace, doc)
+    assert formatted_str == expected_str
