@@ -6,7 +6,6 @@ from pathlib import PurePath
 from subprocess import PIPE, Popen
 from typing import Dict, List
 
-from lsprotocol.converters import get_converter
 from lsprotocol.types import (
     CodeAction,
     CodeActionContext,
@@ -26,6 +25,7 @@ from pylsp.workspace import Document, Workspace
 
 from pylsp_ruff.ruff import Check as RuffCheck
 from pylsp_ruff.ruff import Fix as RuffFix
+from pylsp_ruff.settings import PluginSettings, get_converter
 
 log = logging.getLogger(__name__)
 converter = get_converter()
@@ -52,26 +52,16 @@ UNNECESSITY_CODES = {
 def pylsp_settings():
     log.debug("Initializing pylsp_ruff")
     # this plugin disables flake8, mccabe, and pycodestyle by default
-    return {
+    settings = {
         "plugins": {
-            "ruff": {
-                "enabled": True,
-                "config": None,
-                "exclude": None,
-                "executable": "ruff",
-                "ignore": None,
-                "extendIgnore": None,
-                "lineLength": None,
-                "perFileIgnores": None,
-                "select": None,
-                "extendSelect": None,
-            },
+            "ruff": PluginSettings(),
             "pyflakes": {"enabled": False},
             "flake8": {"enabled": False},
             "mccabe": {"enabled": False},
             "pycodestyle": {"enabled": False},
         }
     }
+    return converter.unstructure(settings)
 
 
 @hookimpl
@@ -342,9 +332,9 @@ def run_ruff(workspace: Workspace, document: Document, fix: bool = False) -> str
     -------
     String containing the result in json format.
     """
-    config = load_config(workspace, document)
-    executable = config.pop("executable")
-    arguments = build_arguments(document, config, fix)
+    settings = load_settings(workspace, document)
+    executable = settings.executable
+    arguments = build_arguments(document, settings, fix)
 
     log.debug(f"Calling {executable} with args: {arguments} on '{document.path}'")
     try:
@@ -364,7 +354,11 @@ def run_ruff(workspace: Workspace, document: Document, fix: bool = False) -> str
     return stdout.decode()
 
 
-def build_arguments(document: Document, options: Dict, fix: bool = False) -> List[str]:
+def build_arguments(
+    document: Document,
+    settings: PluginSettings,
+    fix: bool = False,
+) -> List[str]:
     """
     Build arguments for ruff.
 
@@ -372,53 +366,62 @@ def build_arguments(document: Document, options: Dict, fix: bool = False) -> Lis
     ----------
     document : pylsp.workspace.Document
         Document to apply ruff on.
-    options : Dict
-        Dict of arguments to pass to ruff.
+    settings : PluginSettings
+        Settings to use for arguments to pass to ruff.
 
     Returns
     -------
     List containing the arguments.
     """
+    args = []
     # Suppress update announcements
-    args = ["--quiet"]
+    args.append("--quiet")
     # Use the json formatting for easier evaluation
-    args.extend(["--format=json"])
+    args.append("--format=json")
     if fix:
-        args.extend(["--fix"])
+        args.append("--fix")
     else:
         # Do not attempt to fix -> returns file instead of diagnostics
-        args.extend(["--no-fix"])
+        args.append("--no-fix")
     # Always force excludes
-    args.extend(["--force-exclude"])
+    args.append("--force-exclude")
     # Pass filename to ruff for per-file-ignores, catch unsaved
     if document.path != "":
-        args.extend(["--stdin-filename", document.path])
+        args.append(f"--stdin-filename={document.path}")
 
-    # Convert per-file-ignores dict to right format
-    per_file_ignores = options.pop("per-file-ignores")
+    if settings.config:
+        args.append(f"--config={settings.config}")
 
-    if per_file_ignores:
-        for path, errors in per_file_ignores.items():
-            errors = (",").join(errors)
-            if PurePath(document.path).match(path):
-                args.extend([f"--ignore={errors}"])
+    if settings.line_length:
+        args.append(f"--line-length={settings.line_length}")
 
-    for arg_name, arg_val in options.items():
-        if arg_val is None:
-            continue
-        arg = None
-        if isinstance(arg_val, list):
-            arg = "--{}={}".format(arg_name, ",".join(arg_val))
-        else:
-            arg = "--{}={}".format(arg_name, arg_val)
-        args.append(arg)
+    if settings.exclude:
+        args.append(f"--exclude={','.join(settings.exclude)}")
+
+    if settings.select:
+        args.append(f"--select={','.join(settings.select)}")
+
+    if settings.extend_select:
+        args.append(f"--extend-select={','.join(settings.extend_select)}")
+
+    if settings.ignore:
+        args.append(f"--ignore={','.join(settings.ignore)}")
+
+    if settings.extend_ignore:
+        args.append(f"--extend-ignore={','.join(settings.extend_ignore)}")
+
+    if settings.per_file_ignores:
+        for path, errors in settings.per_file_ignores.items():
+            if not PurePath(document.path).match(path):
+                continue
+            args.append(f"--ignore={','.join(errors)}")
 
     args.extend(["--", "-"])
 
     return args
 
 
-def load_config(workspace: Workspace, document: Document) -> Dict:
+def load_settings(workspace: Workspace, document: Document) -> PluginSettings:
     """
     Load settings from pyproject.toml file in the project path.
 
@@ -431,10 +434,11 @@ def load_config(workspace: Workspace, document: Document) -> Dict:
 
     Returns
     -------
-    Dictionary containing the settings to use when calling ruff.
+    PluginSettings read via lsp.
     """
     config = workspace._config
-    _settings = config.plugin_settings("ruff", document_path=document.path)
+    _plugin_settings = config.plugin_settings("ruff", document_path=document.path)
+    plugin_settings = converter.structure(_plugin_settings, PluginSettings)
 
     pyproject_file = find_parents(
         workspace.root_path, document.path, ["pyproject.toml"]
@@ -446,32 +450,12 @@ def load_config(workspace: Workspace, document: Document) -> Dict:
             f"Found pyproject file: {str(pyproject_file[0])}, "
             + "skipping pylsp config."
         )
-
         # Leave config to pyproject.toml
-        settings = {
-            "config": None,
-            "exclude": None,
-            "executable": _settings.get("executable", "ruff"),
-            "ignore": None,
-            "extend-ignore": _settings.get("extendIgnore", None),
-            "line-length": None,
-            "per-file-ignores": None,
-            "select": None,
-            "extend-select": _settings.get("extendSelect", None),
-        }
+        return PluginSettings(
+            enabled=plugin_settings.executable,
+            executable=plugin_settings.executable,
+            extend_ignore=plugin_settings.extend_ignore,
+            extend_select=plugin_settings.extend_select,
+        )
 
-    else:
-        # Default values are given by ruff
-        settings = {
-            "config": _settings.get("config", None),
-            "exclude": _settings.get("exclude", None),
-            "executable": _settings.get("executable", "ruff"),
-            "ignore": _settings.get("ignore", None),
-            "extend-ignore": _settings.get("extendIgnore", None),
-            "line-length": _settings.get("lineLength", None),
-            "per-file-ignores": _settings.get("perFileIgnores", None),
-            "select": _settings.get("select", None),
-            "extend-select": _settings.get("extendSelect", None),
-        }
-
-    return settings
+    return plugin_settings

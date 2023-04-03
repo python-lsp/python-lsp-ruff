@@ -112,7 +112,7 @@ def test_ruff_executable_param(workspace):
         assert ruff_executable in call_args
 
 
-def get_ruff_cfg_settings(workspace, doc, config_str):
+def get_ruff_settings(workspace, doc, config_str):
     """Write a ``pyproject.toml``, load it in the workspace, and return the ruff
     settings.
 
@@ -124,10 +124,10 @@ def get_ruff_cfg_settings(workspace, doc, config_str):
     ) as f:
         f.write(config_str)
 
-    return ruff_lint.load_config(workspace, doc)
+    return ruff_lint.load_settings(workspace, doc)
 
 
-def test_ruff_config(workspace):
+def test_ruff_settings(workspace):
     config_str = r"""[tool.ruff]
 ignore = ["F841"]
 exclude = [
@@ -149,16 +149,22 @@ def f():
     doc_uri = uris.from_fs_path(os.path.join(workspace.root_path, "__init__.py"))
     workspace.put_document(doc_uri, doc_str)
 
-    ruff_settings = get_ruff_cfg_settings(
+    ruff_settings = get_ruff_settings(
         workspace, workspace.get_document(doc_uri), config_str
     )
 
     # Check that user config is ignored
-    for key, value in ruff_settings.items():
-        if key == "executable":
-            assert value == "ruff"
-            continue
-        assert value is None
+    assert ruff_settings.executable == "ruff"
+    empty_keys = [
+        "config",
+        "line_length",
+        "exclude",
+        "select",
+        "ignore",
+        "per_file_ignores",
+    ]
+    for k in empty_keys:
+        assert getattr(ruff_settings, k) is None
 
     with patch("pylsp_ruff.plugin.Popen") as popen_mock:
         mock_instance = popen_mock.return_value
@@ -174,8 +180,7 @@ def f():
         "--format=json",
         "--no-fix",
         "--force-exclude",
-        "--stdin-filename",
-        os.path.join(workspace.root_path, "__init__.py"),
+        f"--stdin-filename={os.path.join(workspace.root_path, '__init__.py')}",
         "--",
         "-",
     ]
@@ -205,7 +210,7 @@ def f():
     doc_uri = uris.from_fs_path(os.path.join(workspace.root_path, "blah/__init__.py"))
     workspace.put_document(doc_uri, doc_str)
 
-    ruff_settings = get_ruff_cfg_settings(
+    ruff_settings = get_ruff_settings(
         workspace, workspace.get_document(doc_uri), config_str
     )
 
