@@ -22,6 +22,9 @@ There also exists an [AUR package](https://aur.archlinux.org/packages/python-lsp
 This plugin will disable `flake8`, `pycodestyle`, `pyflakes` and `mccabe` by default.
 When enabled, all linting diagnostics will be provided by `ruff`.
 
+This plugin will disable `pyls_isort` by default.
+When enabled, sorting of imports when formatting will be provided by `ruff`.
+
 # Configuration
 
 Configuration options can be passed to the python-language-server. If a `pyproject.toml`

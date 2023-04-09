@@ -59,6 +59,7 @@ def pylsp_settings():
             "flake8": {"enabled": False},
             "mccabe": {"enabled": False},
             "pycodestyle": {"enabled": False},
+            "pyls_isort": {"enabled": False},
         }
     }
     return converter.unstructure(settings)
@@ -345,11 +346,10 @@ def run_ruff_fix(workspace: Workspace, document: Document) -> str:
 
 def run_ruff_format(workspace: Workspace, document: Document) -> str:
     settings = load_settings(workspace, document)
-    extra_arguments = []
+    fixable_codes = ["I"]
     if settings.format:
-        extra_arguments.append(f"--fixable={','.join(settings.format)}")
-    else:
-        extra_arguments.append("--unfixable=ALL")
+        fixable_codes.extend(settings.format)
+    extra_arguments = [f"--fixable={','.join(fixable_codes)}"]
     result = run_ruff(workspace, document, fix=True, extra_arguments=extra_arguments)
     return result
 
