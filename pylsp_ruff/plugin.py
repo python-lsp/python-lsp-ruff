@@ -79,11 +79,18 @@ def pylsp_format_document(workspace: Workspace, document: Document) -> Generator
     """
     log.debug(f"textDocument/formatting: {document}")
     outcome = yield
-    results = outcome.get_result()
-    if results:
-        document.source = results[0]["new_text"]
+    result = outcome.get_result()
+    if result:
+        source = result[0]["newText"]
+    else:
+        source = document.source
 
-    new_text = run_ruff_format(workspace, document)
+    new_text = run_ruff_format(workspace, document.path, document_source=source)
+
+    # Avoid applying empty text edit
+    if new_text == source:
+        return
+
     range = Range(
         start=Position(line=0, character=0),
         end=Position(line=len(document.lines), character=0),
@@ -331,7 +338,9 @@ def create_text_edits(fix: RuffFix) -> List[TextEdit]:
 
 
 def run_ruff_check(workspace: Workspace, document: Document) -> List[RuffCheck]:
-    result = run_ruff(workspace, document)
+    result = run_ruff(
+        workspace, document_path=document.path, document_source=document.source
+    )
     try:
         result = json.loads(result)
     except json.JSONDecodeError:
@@ -340,23 +349,39 @@ def run_ruff_check(workspace: Workspace, document: Document) -> List[RuffCheck]:
 
 
 def run_ruff_fix(workspace: Workspace, document: Document) -> str:
-    result = run_ruff(workspace, document, fix=True)
+    result = run_ruff(
+        workspace,
+        document_path=document.path,
+        document_source=document.source,
+        fix=True,
+    )
     return result
 
 
-def run_ruff_format(workspace: Workspace, document: Document) -> str:
-    settings = load_settings(workspace, document)
+def run_ruff_format(
+    workspace: Workspace, document_path: str, document_source: str
+) -> str:
+    settings = load_settings(workspace, document_path)
     fixable_codes = ["I"]
     if settings.format:
         fixable_codes.extend(settings.format)
-    extra_arguments = [f"--fixable={','.join(fixable_codes)}"]
-    result = run_ruff(workspace, document, fix=True, extra_arguments=extra_arguments)
+    extra_arguments = [
+        f"--fixable={','.join(fixable_codes)}",
+    ]
+    result = run_ruff(
+        workspace,
+        document_path,
+        document_source,
+        fix=True,
+        extra_arguments=extra_arguments,
+    )
     return result
 
 
 def run_ruff(
     workspace: Workspace,
-    document: Document,
+    document_path: str,
+    document_source: str,
     fix: bool = False,
     extra_arguments: Optional[List[str]] = None,
 ) -> str:
@@ -367,8 +392,11 @@ def run_ruff(
     ----------
     workspace : pyls.workspace.Workspace
         Workspace to run ruff in.
-    document : pylsp.workspace.Document
-        File to run ruff on.
+    document_path : str
+        Path to file to run ruff on.
+    document_source : str
+        Document source or to apply ruff on.
+        Needed when the source differs from the file source, e.g. during formatting.
     fix : bool
         Whether to run fix or no-fix.
     extra_arguments : List[str]
@@ -378,11 +406,11 @@ def run_ruff(
     -------
     String containing the result in json format.
     """
-    settings = load_settings(workspace, document)
+    settings = load_settings(workspace, document_path)
     executable = settings.executable
-    arguments = build_arguments(document, settings, fix, extra_arguments)
+    arguments = build_arguments(document_path, settings, fix, extra_arguments)
 
-    log.debug(f"Calling {executable} with args: {arguments} on '{document.path}'")
+    log.debug(f"Calling {executable} with args: {arguments} on '{document_path}'")
     try:
         cmd = [executable]
         cmd.extend(arguments)
@@ -392,7 +420,7 @@ def run_ruff(
         cmd = [sys.executable, "-m", "ruff"]
         cmd.extend(arguments)
         p = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    (stdout, stderr) = p.communicate(document.source.encode())
+    (stdout, stderr) = p.communicate(document_source.encode())
 
     if stderr:
         log.error(f"Error running ruff: {stderr.decode()}")
@@ -401,7 +429,7 @@ def run_ruff(
 
 
 def build_arguments(
-    document: Document,
+    document_path: str,
     settings: PluginSettings,
     fix: bool = False,
     extra_arguments: Optional[List[str]] = None,
@@ -437,8 +465,8 @@ def build_arguments(
     # Always force excludes
     args.append("--force-exclude")
     # Pass filename to ruff for per-file-ignores, catch unsaved
-    if document.path != "":
-        args.append(f"--stdin-filename={document.path}")
+    if document_path != "":
+        args.append(f"--stdin-filename={document_path}")
 
     if settings.config:
         args.append(f"--config={settings.config}")
@@ -463,7 +491,7 @@ def build_arguments(
 
     if settings.per_file_ignores:
         for path, errors in settings.per_file_ignores.items():
-            if not PurePath(document.path).match(path):
+            if not PurePath(document_path).match(path):
                 continue
             args.append(f"--ignore={','.join(errors)}")
 
@@ -475,7 +503,7 @@ def build_arguments(
     return args
 
 
-def load_settings(workspace: Workspace, document: Document) -> PluginSettings:
+def load_settings(workspace: Workspace, document_path: str) -> PluginSettings:
     """
     Load settings from pyproject.toml file in the project path.
 
@@ -483,19 +511,19 @@ def load_settings(workspace: Workspace, document: Document) -> PluginSettings:
     ----------
     workspace : pylsp.workspace.Workspace
         Current workspace.
-    document : pylsp.workspace.Document
-        Document to apply ruff on.
+    document_path : str
+        Path to the document to apply ruff on.
 
     Returns
     -------
     PluginSettings read via lsp.
     """
     config = workspace._config
-    _plugin_settings = config.plugin_settings("ruff", document_path=document.path)
+    _plugin_settings = config.plugin_settings("ruff", document_path=document_path)
     plugin_settings = converter.structure(_plugin_settings, PluginSettings)
 
     pyproject_file = find_parents(
-        workspace.root_path, document.path, ["pyproject.toml"]
+        workspace.root_path, document_path, ["pyproject.toml"]
     )
 
     # Check if pyproject is present, ignore user settings if toml exists
