@@ -124,7 +124,7 @@ def get_ruff_settings(workspace, doc, config_str):
     ) as f:
         f.write(config_str)
 
-    return ruff_lint.load_settings(workspace, doc)
+    return ruff_lint.load_settings(workspace, doc.path)
 
 
 def test_ruff_settings(workspace):

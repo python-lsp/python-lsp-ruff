@@ -121,7 +121,9 @@ def test_fix_all(workspace):
 
 def test_format_document_default_settings(workspace):
     _, doc = temp_document(import_str, workspace)
-    formatted_str = ruff_lint.run_ruff_format(workspace, doc)
+    formatted_str = ruff_lint.run_ruff_format(
+        workspace, document_path=doc.path, document_source=doc.source
+    )
     assert formatted_str == import_str
 
 
@@ -143,5 +145,7 @@ def test_format_document_settings(workspace):
         }
     )
     _, doc = temp_document(import_str, workspace)
-    formatted_str = ruff_lint.run_ruff_format(workspace, doc)
+    formatted_str = ruff_lint.run_ruff_format(
+        workspace, document_path=doc.path, document_source=doc.source
+    )
     assert formatted_str == expected_str
