@@ -28,6 +28,7 @@ from pylsp_ruff.ruff import Fix as RuffFix
 from pylsp_ruff.settings import PluginSettings, get_converter
 
 log = logging.getLogger(__name__)
+logging.getLogger("blib2to3").setLevel(logging.ERROR)
 converter = get_converter()
 
 DIAGNOSTIC_SOURCE = "ruff"
