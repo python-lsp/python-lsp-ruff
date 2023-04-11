@@ -4,8 +4,8 @@
 [![Anaconda](https://anaconda.org/conda-forge/python-lsp-ruff/badges/version.svg)](https://anaconda.org/conda-forge/python-lsp-ruff)
 [![Python](https://github.com/python-lsp/python-lsp-ruff/actions/workflows/python.yml/badge.svg)](https://github.com/python-lsp/python-lsp-ruff/actions/workflows/python.yml)
 
-Linter plugin for pylsp based using ruff.
-Formatting via `ruff`'s `--fix` is available since v1.3.0.
+`python-lsp-ruff` is a plugin for `python-lsp-server` that adds linting, code action and formatting capabilities that are provided by [ruff](https://github.com/charliermarsh/ruff),
+a extremely fast Python linter, written in Rust.
 
 ## Install
 
@@ -19,12 +19,29 @@ There also exists an [AUR package](https://aur.archlinux.org/packages/python-lsp
 
 # Usage
 
-This plugin will disable `flake8`, `pycodestyle`, `pyflakes`, `mccabe` and `isort` by default.
+This plugin will disable `flake8`, `pycodestyle`, `pyflakes`, `mccabe` and `pyls_isort` by default.
 When enabled, all linting diagnostics will be provided by `ruff`.
 Sorting of the imports through `ruff` when formatting is enabled by default.
 The list of code fixes can be changed via the `pylsp.plugins.ruff.format` option.
 
-When enabled, sorting of imports when formatting will be provided by `ruff`.
+Any codes given in the `format` option will only be marked as `fixable` for ruff during the formatting operation, the user has to make sure that these codes are also in the list of codes that ruff checks!
+
+This example configuration for `neovim` shows how to always sort imports when running `textDocument/formatting`:
+
+```lua
+lspconfig.pylsp.setup {
+	settings = {
+		pylsp = {
+			plugins = {
+				ruff = {
+					enabled = true,
+					extendSelect = { "I" },
+				},
+			}
+		}
+	}
+}
+```
 
 # Configuration
 
@@ -48,6 +65,6 @@ the valid configuration keys:
  - `pylsp.plugins.ruff.perFileIgnores`: File-specific error codes to be ignored.
  - `pylsp.plugins.ruff.select`: List of error codes to enable.
  - `pylsp.plugins.ruff.extendSelect`: Same as select, but append to existing error codes.
- - `pylsp.plugins.ruff.format`: List of error codes to fix during formatting.
+ - `pylsp.plugins.ruff.format`: List of error codes to fix during formatting. The default is `["I"]`, any additional codes are appended to this list.
 
 For more information on the configuration visit [Ruff's homepage](https://beta.ruff.rs/docs/configuration/).
