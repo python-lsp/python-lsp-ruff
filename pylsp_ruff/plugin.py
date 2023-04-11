@@ -6,6 +6,11 @@ from pathlib import PurePath
 from subprocess import PIPE, Popen
 from typing import Dict, Generator, List, Optional
 
+if sys.version_info >= (3, 11):
+    import tomllib
+else:
+    import tomli as tomllib
+
 from lsprotocol.types import (
     CodeAction,
     CodeActionContext,
@@ -527,12 +532,23 @@ def load_settings(workspace: Workspace, document_path: str) -> PluginSettings:
         workspace.root_path, document_path, ["pyproject.toml"]
     )
 
-    # Check if pyproject is present, ignore user settings if toml exists
+    config_in_pyproject = False
     if pyproject_file:
-        log.debug(
-            f"Found pyproject file: {str(pyproject_file[0])}, "
-            + "skipping pylsp config."
-        )
+        try:
+            with open(pyproject_file[0], "rb") as f:
+                toml_dict = tomllib.load(f)
+        except tomllib.TOMLDecodeError:
+            log.warn("Error while parsing toml file, ignoring config.")
+        if "tool.ruff" in toml_dict:
+            config_in_pyproject = True
+
+    ruff_toml = find_parents(
+        workspace.root_path, document_path, ["ruff.toml", ".ruff.toml"]
+    )
+
+    # Check if pyproject is present, ignore user settings if toml exists
+    if config_in_pyproject or ruff_toml:
+        log.debug("Found existing configuration for ruff, skipping pylsp config.")
         # Leave config to pyproject.toml
         return PluginSettings(
             enabled=plugin_settings.executable,
