@@ -193,26 +193,25 @@ def pylsp_code_actions(
 
     _context = converter.structure(context, CodeActionContext)
     diagnostics = _context.diagnostics
-    diagnostics_with_fixes = [d for d in diagnostics if d.data]
 
     code_actions = []
     has_organize_imports = False
 
-    for diagnostic in diagnostics_with_fixes:
-        fix = converter.structure(diagnostic.data, RuffFix)
+    for diagnostic in diagnostics:
+        code_actions.append(create_disable_code_action(document, diagnostic))
 
-        if diagnostic.code == "I001":
-            code_actions.append(
-                create_organize_imports_code_action(document, diagnostic, fix)
-            )
-            has_organize_imports = True
-        else:
-            code_actions.extend(
-                [
+        if diagnostic.data:  # Has fix
+            fix = converter.structure(diagnostic.data, RuffFix)
+
+            if diagnostic.code == "I001":
+                code_actions.append(
+                    create_organize_imports_code_action(document, diagnostic, fix)
+                )
+                has_organize_imports = True
+            else:
+                code_actions.append(
                     create_fix_code_action(document, diagnostic, fix),
-                    create_disable_code_action(document, diagnostic),
-                ]
-            )
+                )
 
     checks = run_ruff_check(workspace, document)
     checks_with_fixes = [c for c in checks if c.fix]
@@ -222,8 +221,11 @@ def pylsp_code_actions(
         check = checks_organize_imports[0]
         fix = check.fix  # type: ignore
         diagnostic = create_diagnostic(check)
-        code_actions.append(
-            create_organize_imports_code_action(document, diagnostic, fix),
+        code_actions.extend(
+            [
+                create_organize_imports_code_action(document, diagnostic, fix),
+                create_disable_code_action(document, diagnostic),
+            ]
         )
 
     if checks_with_fixes:

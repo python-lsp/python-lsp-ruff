@@ -53,6 +53,7 @@ codeactions = [
 codeactions_import = [
     "Ruff: Organize imports",
     "Ruff: Fix All",
+    "Ruff (I001): Disable for this line",
 ]
 
 
