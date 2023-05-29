@@ -334,11 +334,11 @@ def create_text_edits(fix: RuffFix) -> List[TextEdit]:
         range = Range(
             start=Position(
                 line=edit.location.row - 1,
-                character=edit.location.column,  # yes, no -1
+                character=edit.location.column - 1,
             ),
             end=Position(
                 line=edit.end_location.row - 1,
-                character=edit.end_location.column,  # yes, no -1
+                character=edit.end_location.column - 1,
             ),
         )
         edits.append(TextEdit(range=range, new_text=edit.content))
