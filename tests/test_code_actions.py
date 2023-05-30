@@ -116,14 +116,16 @@ def test_fix_all(workspace):
         """
     )
     _, doc = temp_document(codeaction_str, workspace)
-    fixed_str = ruff_lint.run_ruff_fix(workspace, doc)
+    settings = ruff_lint.load_settings(workspace, doc.path)
+    fixed_str = ruff_lint.run_ruff_fix(doc, settings)
     assert fixed_str == expected_str
 
 
 def test_format_document_default_settings(workspace):
     _, doc = temp_document(import_str, workspace)
+    settings = ruff_lint.load_settings(workspace, doc.path)
     formatted_str = ruff_lint.run_ruff_format(
-        workspace, document_path=doc.path, document_source=doc.source
+        settings, document_path=doc.path, document_source=doc.source
     )
     assert formatted_str == import_str
 
@@ -146,7 +148,8 @@ def test_format_document_settings(workspace):
         }
     )
     _, doc = temp_document(import_str, workspace)
+    settings = ruff_lint.load_settings(workspace, doc.path)
     formatted_str = ruff_lint.run_ruff_format(
-        workspace, document_path=doc.path, document_source=doc.source
+        settings, document_path=doc.path, document_source=doc.source
     )
     assert formatted_str == expected_str
