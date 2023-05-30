@@ -190,6 +190,7 @@ def f():
             "plugins": {
                 "ruff": {
                     "extendIgnore": ["D104"],
+                    "severities": {"E402": "E", "D103": "I"},
                 }
             }
         }
@@ -205,6 +206,13 @@ def f():
     assert "D103" in _list
     assert "D104" not in _list
     assert "F841" not in _list
+
+    # Check custom severities
+    for diag in diags:
+        if diag["code"] == "E402":
+            assert diag["severity"] == 1
+        if diag["code"] == "D103":
+            assert diag["severity"] == 3
 
     # Excludes
     doc_uri = uris.from_fs_path(os.path.join(workspace.root_path, "blah/__init__.py"))

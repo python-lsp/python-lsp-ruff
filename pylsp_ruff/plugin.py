@@ -53,6 +53,13 @@ UNNECESSITY_CODES = {
     "F841",  # local variable `name` is assigned to but never used
 }
 
+DIAGNOSTIC_SEVERITIES = {
+    "E": DiagnosticSeverity.Error,
+    "W": DiagnosticSeverity.Warning,
+    "I": DiagnosticSeverity.Information,
+    "H": DiagnosticSeverity.Hint,
+}
+
 
 @hookimpl
 def pylsp_settings():
@@ -91,7 +98,10 @@ def pylsp_format_document(workspace: Workspace, document: Document) -> Generator
     else:
         source = document.source
 
-    new_text = run_ruff_format(workspace, document.path, document_source=source)
+    settings = load_settings(workspace=workspace, document_path=document.path)
+    new_text = run_ruff_format(
+        settings=settings, document_path=document.path, document_source=source
+    )
 
     # Avoid applying empty text edit
     if new_text == source:
@@ -122,12 +132,13 @@ def pylsp_lint(workspace: Workspace, document: Document) -> List[Dict]:
     -------
     List of dicts containing the diagnostics.
     """
-    checks = run_ruff_check(workspace, document)
-    diagnostics = [create_diagnostic(c) for c in checks]
+    settings = load_settings(workspace, document.path)
+    checks = run_ruff_check(document=document, settings=settings)
+    diagnostics = [create_diagnostic(check=c, settings=settings) for c in checks]
     return converter.unstructure(diagnostics)
 
 
-def create_diagnostic(check: RuffCheck) -> Diagnostic:
+def create_diagnostic(check: RuffCheck, settings: PluginSettings) -> Diagnostic:
     # Adapt range to LSP specification (zero-based)
     range = Range(
         start=Position(
@@ -145,6 +156,12 @@ def create_diagnostic(check: RuffCheck) -> Diagnostic:
     severity = DiagnosticSeverity.Warning
     if check.code == "E999" or check.code[0] == "F":
         severity = DiagnosticSeverity.Error
+
+    # Override severity with custom severity if possible, use default otherwise
+    if settings.severities is not None:
+        custom_sev = settings.severities.get(check.code, None)
+        if custom_sev is not None:
+            severity = DIAGNOSTIC_SEVERITIES.get(custom_sev, severity)
 
     tags = []
     if check.code in UNNECESSITY_CODES:
@@ -198,39 +215,48 @@ def pylsp_code_actions(
     has_organize_imports = False
 
     for diagnostic in diagnostics:
-        code_actions.append(create_disable_code_action(document, diagnostic))
+        code_actions.append(
+            create_disable_code_action(document=document, diagnostic=diagnostic)
+        )
 
         if diagnostic.data:  # Has fix
             fix = converter.structure(diagnostic.data, RuffFix)
 
             if diagnostic.code == "I001":
                 code_actions.append(
-                    create_organize_imports_code_action(document, diagnostic, fix)
+                    create_organize_imports_code_action(
+                        document=document, diagnostic=diagnostic, fix=fix
+                    )
                 )
                 has_organize_imports = True
             else:
                 code_actions.append(
-                    create_fix_code_action(document, diagnostic, fix),
+                    create_fix_code_action(
+                        document=document, diagnostic=diagnostic, fix=fix
+                    ),
                 )
 
-    checks = run_ruff_check(workspace, document)
+    settings = load_settings(workspace=workspace, document_path=document.path)
+    checks = run_ruff_check(document=document, settings=settings)
     checks_with_fixes = [c for c in checks if c.fix]
     checks_organize_imports = [c for c in checks_with_fixes if c.code == "I001"]
 
     if not has_organize_imports and checks_organize_imports:
         check = checks_organize_imports[0]
         fix = check.fix  # type: ignore
-        diagnostic = create_diagnostic(check)
+        diagnostic = create_diagnostic(check=check, settings=settings)
         code_actions.extend(
             [
-                create_organize_imports_code_action(document, diagnostic, fix),
-                create_disable_code_action(document, diagnostic),
+                create_organize_imports_code_action(
+                    document=document, diagnostic=diagnostic, fix=fix
+                ),
+                create_disable_code_action(document=document, diagnostic=diagnostic),
             ]
         )
 
     if checks_with_fixes:
         code_actions.append(
-            create_fix_all_code_action(workspace, document),
+            create_fix_all_code_action(document=document, settings=settings),
         )
 
     return converter.unstructure(code_actions)
@@ -308,13 +334,13 @@ def create_organize_imports_code_action(
 
 
 def create_fix_all_code_action(
-    workspace: Workspace,
     document: Document,
+    settings: PluginSettings,
 ) -> CodeAction:
     title = "Ruff: Fix All"
     kind = CodeActionKind.SourceFixAll
 
-    new_text = run_ruff_fix(workspace, document)
+    new_text = run_ruff_fix(document=document, settings=settings)
     range = Range(
         start=Position(line=0, character=0),
         end=Position(line=len(document.lines), character=0),
@@ -345,9 +371,11 @@ def create_text_edits(fix: RuffFix) -> List[TextEdit]:
     return edits
 
 
-def run_ruff_check(workspace: Workspace, document: Document) -> List[RuffCheck]:
+def run_ruff_check(document: Document, settings: PluginSettings) -> List[RuffCheck]:
     result = run_ruff(
-        workspace, document_path=document.path, document_source=document.source
+        document_path=document.path,
+        document_source=document.source,
+        settings=settings,
     )
     try:
         result = json.loads(result)
@@ -356,20 +384,21 @@ def run_ruff_check(workspace: Workspace, document: Document) -> List[RuffCheck]:
     return converter.structure(result, List[RuffCheck])
 
 
-def run_ruff_fix(workspace: Workspace, document: Document) -> str:
+def run_ruff_fix(document: Document, settings: PluginSettings) -> str:
     result = run_ruff(
-        workspace,
         document_path=document.path,
         document_source=document.source,
         fix=True,
+        settings=settings,
     )
     return result
 
 
 def run_ruff_format(
-    workspace: Workspace, document_path: str, document_source: str
+    settings: PluginSettings,
+    document_path: str,
+    document_source: str,
 ) -> str:
-    settings = load_settings(workspace, document_path)
     fixable_codes = ["I"]
     if settings.format:
         fixable_codes.extend(settings.format)
@@ -377,9 +406,9 @@ def run_ruff_format(
         f"--fixable={','.join(fixable_codes)}",
     ]
     result = run_ruff(
-        workspace,
-        document_path,
-        document_source,
+        settings=settings,
+        document_path=document_path,
+        document_source=document_source,
         fix=True,
         extra_arguments=extra_arguments,
     )
@@ -387,7 +416,7 @@ def run_ruff_format(
 
 
 def run_ruff(
-    workspace: Workspace,
+    settings: PluginSettings,
     document_path: str,
     document_source: str,
     fix: bool = False,
@@ -398,8 +427,8 @@ def run_ruff(
 
     Parameters
     ----------
-    workspace : pyls.workspace.Workspace
-        Workspace to run ruff in.
+    settings : PluginSettings
+        Settings to use.
     document_path : str
         Path to file to run ruff on.
     document_source : str
@@ -414,7 +443,6 @@ def run_ruff(
     -------
     String containing the result in json format.
     """
-    settings = load_settings(workspace, document_path)
     executable = settings.executable
     arguments = build_arguments(document_path, settings, fix, extra_arguments)
 
@@ -558,6 +586,7 @@ def load_settings(workspace: Workspace, document_path: str) -> PluginSettings:
             extend_ignore=plugin_settings.extend_ignore,
             extend_select=plugin_settings.extend_select,
             format=plugin_settings.format,
+            severities=plugin_settings.severities,
         )
 
     return plugin_settings

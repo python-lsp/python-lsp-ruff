@@ -66,5 +66,17 @@ the valid configuration keys:
  - `pylsp.plugins.ruff.select`: List of error codes to enable.
  - `pylsp.plugins.ruff.extendSelect`: Same as select, but append to existing error codes.
  - `pylsp.plugins.ruff.format`: List of error codes to fix during formatting. The default is `["I"]`, any additional codes are appended to this list.
+ - `pylsp.plugins.ruff.severities`: Dictionary of custom severity levels for specific codes, see [below](#custom-severities).
 
 For more information on the configuration visit [Ruff's homepage](https://beta.ruff.rs/docs/configuration/).
+
+## Custom severities
+
+By default all diagnostics are marked as warning, except for `"E999"` and all error codes starting with `"F"`, which are displayed as errors.
+This default can be changed through the `pylsp.plugins.ruff.severities` option, which takes the error code as a key and any of
+`"E"`, `"W"`, `"I"` and `"H"` to be displayed as errors, warnings, information and hints, respectively.
+For more information on the diagnostic severities please refer to
+[the official LSP reference](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#diagnosticSeverity).
+
+Note that `python-lsp-ruff` does *not* accept regex, and it will *not* check whether the error code exists. If the custom severity level is not displayed,
+please check first that the error code is correct and that the given value is one of the possible keys from above.
