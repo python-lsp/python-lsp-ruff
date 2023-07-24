@@ -5,7 +5,7 @@
 [![Python](https://github.com/python-lsp/python-lsp-ruff/actions/workflows/python.yml/badge.svg)](https://github.com/python-lsp/python-lsp-ruff/actions/workflows/python.yml)
 
 `python-lsp-ruff` is a plugin for `python-lsp-server` that adds linting, code action and formatting capabilities that are provided by [ruff](https://github.com/charliermarsh/ruff),
-a extremely fast Python linter, written in Rust.
+an extremely fast Python linter written in Rust.
 
 ## Install
 
@@ -72,7 +72,7 @@ For more information on the configuration visit [Ruff's homepage](https://beta.r
 
 ## Custom severities
 
-By default all diagnostics are marked as warning, except for `"E999"` and all error codes starting with `"F"`, which are displayed as errors.
+By default, all diagnostics are marked as warning, except for `"E999"` and all error codes starting with `"F"`, which are displayed as errors.
 This default can be changed through the `pylsp.plugins.ruff.severities` option, which takes the error code as a key and any of
 `"E"`, `"W"`, `"I"` and `"H"` to be displayed as errors, warnings, information and hints, respectively.
 For more information on the diagnostic severities please refer to
