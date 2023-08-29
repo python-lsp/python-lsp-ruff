@@ -567,10 +567,10 @@ def load_settings(workspace: Workspace, document_path: str) -> PluginSettings:
         try:
             with open(pyproject_file[0], "rb") as f:
                 toml_dict = tomllib.load(f)
+            if "tool.ruff" in toml_dict:
+                config_in_pyproject = True
         except tomllib.TOMLDecodeError:
             log.warn("Error while parsing toml file, ignoring config.")
-        if "tool.ruff" in toml_dict:
-            config_in_pyproject = True
 
     ruff_toml = find_parents(
         workspace.root_path, document_path, ["ruff.toml", ".ruff.toml"]
