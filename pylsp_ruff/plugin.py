@@ -581,7 +581,7 @@ def load_settings(workspace: Workspace, document_path: str) -> PluginSettings:
         log.debug("Found existing configuration for ruff, skipping pylsp config.")
         # Leave config to pyproject.toml
         return PluginSettings(
-            enabled=plugin_settings.executable,
+            enabled=plugin_settings.enabled,
             executable=plugin_settings.executable,
             extend_ignore=plugin_settings.extend_ignore,
             extend_select=plugin_settings.extend_select,
