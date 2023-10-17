@@ -177,7 +177,7 @@ def f():
     assert call_args == [
         "ruff",
         "--quiet",
-        "--format=json",
+        "--output-format=json",
         "--no-fix",
         "--force-exclude",
         f"--stdin-filename={os.path.join(workspace.root_path, '__init__.py')}",

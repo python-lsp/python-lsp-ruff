@@ -492,7 +492,7 @@ def build_arguments(
     # Suppress update announcements
     args.append("--quiet")
     # Use the json formatting for easier evaluation
-    args.append("--format=json")
+    args.append("--output-format=json")
     if fix:
         args.append("--fix")
     else:
