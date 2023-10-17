@@ -115,6 +115,15 @@ def test_fix_all(workspace):
             pass
         """
     )
+    workspace._config.update(
+        {
+            "plugins": {
+                "ruff": {
+                    "unsafeFixes": True,
+                }
+            }
+        }
+    )
     _, doc = temp_document(codeaction_str, workspace)
     settings = ruff_lint.load_settings(workspace, doc.path)
     fixed_str = ruff_lint.run_ruff_fix(doc, settings)

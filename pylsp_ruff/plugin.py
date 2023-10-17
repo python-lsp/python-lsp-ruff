@@ -510,6 +510,9 @@ def build_arguments(
     if settings.line_length:
         args.append(f"--line-length={settings.line_length}")
 
+    if settings.unsafe_fixes:
+        args.append("--unsafe-fixes")
+
     if settings.exclude:
         args.append(f"--exclude={','.join(settings.exclude)}")
 
@@ -583,6 +586,7 @@ def load_settings(workspace: Workspace, document_path: str) -> PluginSettings:
         return PluginSettings(
             enabled=plugin_settings.enabled,
             executable=plugin_settings.executable,
+            unsafe_fixes=plugin_settings.unsafe_fixes,
             extend_ignore=plugin_settings.extend_ignore,
             extend_select=plugin_settings.extend_select,
             format=plugin_settings.format,
