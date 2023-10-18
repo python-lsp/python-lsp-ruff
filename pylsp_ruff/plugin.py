@@ -64,12 +64,12 @@ DIAGNOSTIC_SEVERITIES = {
 @hookimpl
 def pylsp_settings():
     log.debug("Initializing pylsp_ruff")
-    # this plugin disables flake8, mccabe, and pycodestyle by default
+    # This plugin disables some enabled-by-default plugins that duplicate Ruff
+    # functionality
     settings = {
         "plugins": {
             "ruff": PluginSettings(),
             "pyflakes": {"enabled": False},
-            "flake8": {"enabled": False},
             "mccabe": {"enabled": False},
             "pycodestyle": {"enabled": False},
             "pyls_isort": {"enabled": False},
