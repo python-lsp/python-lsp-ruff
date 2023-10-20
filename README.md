@@ -65,7 +65,7 @@ the valid configuration keys:
  - `pylsp.plugins.ruff.enabled`: boolean to enable/disable the plugin. `true` by default.
  - `pylsp.plugins.ruff.config`: Path to optional `pyproject.toml` file.
  - `pylsp.plugins.ruff.exclude`: Exclude files from being checked by `ruff`.
- - `pylsp.plugins.ruff.executable`: Path to the `ruff` executable. Assumed to be in PATH by default.
+ - `pylsp.plugins.ruff.executable`: Path to the `ruff` executable. Uses `os.executable -m "ruff"` by default.
  - `pylsp.plugins.ruff.ignore`: Error codes to ignore.
  - `pylsp.plugins.ruff.extendIgnore`: Same as ignore, but append to existing ignores.
  - `pylsp.plugins.ruff.lineLength`: Set the line-length for length checks.
