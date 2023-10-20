@@ -115,10 +115,39 @@ def test_fix_all(workspace):
             pass
         """
     )
+    expected_str_safe = dedent(
+        """
+        def f():
+            a = 2
+        """
+    )
+    workspace._config.update(
+        {
+            "plugins": {
+                "ruff": {
+                    "unsafeFixes": True,
+                }
+            }
+        }
+    )
     _, doc = temp_document(codeaction_str, workspace)
     settings = ruff_lint.load_settings(workspace, doc.path)
     fixed_str = ruff_lint.run_ruff_fix(doc, settings)
     assert fixed_str == expected_str
+
+    workspace._config.update(
+        {
+            "plugins": {
+                "ruff": {
+                    "unsafeFixes": False,
+                }
+            }
+        }
+    )
+    _, doc = temp_document(codeaction_str, workspace)
+    settings = ruff_lint.load_settings(workspace, doc.path)
+    fixed_str = ruff_lint.run_ruff_fix(doc, settings)
+    assert fixed_str == expected_str_safe
 
 
 def test_format_document_default_settings(workspace):

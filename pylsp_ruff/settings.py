@@ -9,6 +9,7 @@ from cattrs.gen import make_dict_structure_fn, make_dict_unstructure_fn, overrid
 class PluginSettings:
     enabled: bool = True
     executable: str = "ruff"
+    unsafe_fixes: bool = False
 
     config: Optional[str] = None
     line_length: Optional[int] = None

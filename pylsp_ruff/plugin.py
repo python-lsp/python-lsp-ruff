@@ -139,6 +139,20 @@ def pylsp_lint(workspace: Workspace, document: Document) -> List[Dict]:
 
 
 def create_diagnostic(check: RuffCheck, settings: PluginSettings) -> Diagnostic:
+    """
+    Create a LSP diagnostic based on the given RuffCheck object.
+
+    Parameters
+    ----------
+    check : RuffCheck
+        RuffCheck object to convert.
+    settings : PluginSettings
+        Current settings.
+
+    Returns
+    -------
+    Diagnostic
+    """
     # Adapt range to LSP specification (zero-based)
     range = Range(
         start=Position(
@@ -214,6 +228,8 @@ def pylsp_code_actions(
     code_actions = []
     has_organize_imports = False
 
+    settings = load_settings(workspace=workspace, document_path=document.path)
+
     for diagnostic in diagnostics:
         code_actions.append(
             create_disable_code_action(document=document, diagnostic=diagnostic)
@@ -221,6 +237,10 @@ def pylsp_code_actions(
 
         if diagnostic.data:  # Has fix
             fix = converter.structure(diagnostic.data, RuffFix)
+
+            # Ignore fix if marked as unsafe and unsafe_fixes are disabled
+            if fix.applicability != "safe" and not settings.unsafe_fixes:
+                continue
 
             if diagnostic.code == "I001":
                 code_actions.append(
@@ -236,7 +256,6 @@ def pylsp_code_actions(
                     ),
                 )
 
-    settings = load_settings(workspace=workspace, document_path=document.path)
     checks = run_ruff_check(document=document, settings=settings)
     checks_with_fixes = [c for c in checks if c.fix]
     checks_organize_imports = [c for c in checks_with_fixes if c.code == "I001"]
@@ -458,7 +477,7 @@ def run_ruff(
         p = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
     (stdout, stderr) = p.communicate(document_source.encode())
 
-    if stderr:
+    if p.returncode != 0:
         log.error(f"Error running ruff: {stderr.decode()}")
 
     return stdout.decode()
@@ -491,8 +510,10 @@ def build_arguments(
     args = []
     # Suppress update announcements
     args.append("--quiet")
+    # Suppress exit 1 when violations were found
+    args.append("--exit-zero")
     # Use the json formatting for easier evaluation
-    args.append("--format=json")
+    args.append("--output-format=json")
     if fix:
         args.append("--fix")
     else:
@@ -509,6 +530,9 @@ def build_arguments(
 
     if settings.line_length:
         args.append(f"--line-length={settings.line_length}")
+
+    if settings.unsafe_fixes:
+        args.append("--unsafe-fixes")
 
     if settings.exclude:
         args.append(f"--exclude={','.join(settings.exclude)}")
@@ -583,6 +607,7 @@ def load_settings(workspace: Workspace, document_path: str) -> PluginSettings:
         return PluginSettings(
             enabled=plugin_settings.enabled,
             executable=plugin_settings.executable,
+            unsafe_fixes=plugin_settings.unsafe_fixes,
             extend_ignore=plugin_settings.extend_ignore,
             extend_select=plugin_settings.extend_select,
             format=plugin_settings.format,
