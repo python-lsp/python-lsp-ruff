@@ -465,13 +465,15 @@ def run_ruff(
     executable = settings.executable
     arguments = build_arguments(document_path, settings, fix, extra_arguments)
 
-    log.debug(f"Calling {executable} with args: {arguments} on '{document_path}'")
-    try:
-        cmd = [executable]
-        cmd.extend(arguments)
-        p = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    except Exception:
-        log.debug(f"Can't execute {executable}. Trying with '{sys.executable} -m ruff'")
+    if executable is not None:
+        log.debug(f"Calling {executable} with args: {arguments} on '{document_path}'")
+        try:
+            cmd = [executable]
+            cmd.extend(arguments)
+            p = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+        except Exception:
+            log.error(f"Can't execute ruff with given executable '{executable}'.")
+    else:
         cmd = [sys.executable, "-m", "ruff"]
         cmd.extend(arguments)
         p = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
