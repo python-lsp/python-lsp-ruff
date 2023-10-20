@@ -8,8 +8,7 @@ from cattrs.gen import make_dict_structure_fn, make_dict_unstructure_fn, overrid
 @dataclass
 class PluginSettings:
     enabled: bool = True
-    executable: str = "ruff"
-
+    executable: Optional[str] = None
     config: Optional[str] = None
     line_length: Optional[int] = None
 
@@ -23,6 +22,8 @@ class PluginSettings:
     per_file_ignores: Optional[Dict[str, List[str]]] = None
 
     format: Optional[List[str]] = None
+
+    unsafe_fixes: bool = False
 
     severities: Optional[Dict[str, str]] = None
 

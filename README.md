@@ -17,7 +17,14 @@ pip install python-lsp-ruff
 
 There also exists an [AUR package](https://aur.archlinux.org/packages/python-lsp-ruff).
 
-# Usage
+### When using ruff before version 0.1.0
+Ruff version `0.1.0` introduced API changes that are fixed in Python LSP Ruff `v1.6.0`. To continue with `ruff<0.1.0` please use `v1.5.3`, e.g. using `pip`:
+
+```sh
+pip install "ruff<0.1.0" "python-lsp-ruff==1.5.3"
+```
+
+## Usage
 
 This plugin will disable `pycodestyle`, `pyflakes`, `mccabe` and `pyls_isort` by default, unless they are explicitly enabled in the client configuration.
 When enabled, all linting diagnostics will be provided by `ruff`.
@@ -43,7 +50,7 @@ lspconfig.pylsp.setup {
 }
 ```
 
-# Configuration
+## Configuration
 
 Configuration options can be passed to the python-language-server. If a `pyproject.toml`
 file is present in the project, `python-lsp-ruff` will use these configuration options.
@@ -58,7 +65,7 @@ the valid configuration keys:
  - `pylsp.plugins.ruff.enabled`: boolean to enable/disable the plugin. `true` by default.
  - `pylsp.plugins.ruff.config`: Path to optional `pyproject.toml` file.
  - `pylsp.plugins.ruff.exclude`: Exclude files from being checked by `ruff`.
- - `pylsp.plugins.ruff.executable`: Path to the `ruff` executable. Assumed to be in PATH by default.
+ - `pylsp.plugins.ruff.executable`: Path to the `ruff` executable. Uses `os.executable -m "ruff"` by default.
  - `pylsp.plugins.ruff.ignore`: Error codes to ignore.
  - `pylsp.plugins.ruff.extendIgnore`: Same as ignore, but append to existing ignores.
  - `pylsp.plugins.ruff.lineLength`: Set the line-length for length checks.
@@ -66,11 +73,12 @@ the valid configuration keys:
  - `pylsp.plugins.ruff.select`: List of error codes to enable.
  - `pylsp.plugins.ruff.extendSelect`: Same as select, but append to existing error codes.
  - `pylsp.plugins.ruff.format`: List of error codes to fix during formatting. The default is `["I"]`, any additional codes are appended to this list.
+ - `pylsp.plugins.ruff.unsafeFixes`: boolean that enables/disables fixes that are marked "unsafe" by `ruff`. `false` by default.
  - `pylsp.plugins.ruff.severities`: Dictionary of custom severity levels for specific codes, see [below](#custom-severities).
 
 For more information on the configuration visit [Ruff's homepage](https://beta.ruff.rs/docs/configuration/).
 
-## Custom severities
+### Custom severities
 
 By default, all diagnostics are marked as warning, except for `"E999"` and all error codes starting with `"F"`, which are displayed as errors.
 This default can be changed through the `pylsp.plugins.ruff.severities` option, which takes the error code as a key and any of

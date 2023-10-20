@@ -19,6 +19,7 @@ class Edit:
 class Fix:
     edits: List[Edit]
     message: str
+    applicability: str
 
 
 @dataclass

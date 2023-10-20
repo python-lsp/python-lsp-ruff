@@ -2,6 +2,7 @@
 # Copyright 2021- Python Language Server Contributors.
 
 import os
+import sys
 import tempfile
 from unittest.mock import Mock, patch
 
@@ -154,7 +155,6 @@ def f():
     )
 
     # Check that user config is ignored
-    assert ruff_settings.executable == "ruff"
     empty_keys = [
         "config",
         "line_length",
@@ -175,9 +175,12 @@ def f():
 
     call_args = popen_mock.call_args[0][0]
     assert call_args == [
+        str(sys.executable),
+        "-m",
         "ruff",
         "--quiet",
-        "--format=json",
+        "--exit-zero",
+        "--output-format=json",
         "--no-fix",
         "--force-exclude",
         f"--stdin-filename={os.path.join(workspace.root_path, '__init__.py')}",
