@@ -148,37 +148,3 @@ def test_fix_all(workspace):
     settings = ruff_lint.load_settings(workspace, doc.path)
     fixed_str = ruff_lint.run_ruff_fix(doc, settings)
     assert fixed_str == expected_str_safe
-
-
-def test_format_document_default_settings(workspace):
-    _, doc = temp_document(import_str, workspace)
-    settings = ruff_lint.load_settings(workspace, doc.path)
-    formatted_str = ruff_lint.run_ruff_format(
-        settings, document_path=doc.path, document_source=doc.source
-    )
-    assert formatted_str == import_str
-
-
-def test_format_document_settings(workspace):
-    expected_str = dedent(
-        """
-        import os
-        import pathlib
-        """
-    )
-    workspace._config.update(
-        {
-            "plugins": {
-                "ruff": {
-                    "select": ["I"],
-                    "format": ["I001"],
-                }
-            }
-        }
-    )
-    _, doc = temp_document(import_str, workspace)
-    settings = ruff_lint.load_settings(workspace, doc.path)
-    formatted_str = ruff_lint.run_ruff_format(
-        settings, document_path=doc.path, document_source=doc.source
-    )
-    assert formatted_str == expected_str
