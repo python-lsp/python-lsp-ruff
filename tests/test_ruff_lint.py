@@ -178,6 +178,7 @@ def f():
         str(sys.executable),
         "-m",
         "ruff",
+        "check",
         "--quiet",
         "--exit-zero",
         "--output-format=json",
