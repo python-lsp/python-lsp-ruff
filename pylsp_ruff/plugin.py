@@ -556,6 +556,11 @@ def build_arguments(
             if not PurePath(document_path).match(path):
                 continue
             args.append(f"--ignore={','.join(errors)}")
+    if settings.extension:
+        extension_pairs = ",".join(
+            f"{ext}:{lang}" for ext, lang in settings.extension.items()
+        )
+        args.append(f"--extension={extension_pairs}")
 
     if extra_arguments:
         args.extend(extra_arguments)
