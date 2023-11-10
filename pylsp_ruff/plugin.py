@@ -5,7 +5,7 @@ import re
 import sys
 from pathlib import PurePath
 from subprocess import PIPE, Popen
-from typing import Dict, Generator, List, Optional
+from typing import Dict, Final, Generator, List, Optional
 
 if sys.version_info >= (3, 11):
     import tomllib
@@ -62,7 +62,7 @@ DIAGNOSTIC_SEVERITIES = {
     "H": DiagnosticSeverity.Hint,
 }
 
-ISORT_FIXES = "I"
+ISORT_FIXES: Final = "I"
 
 
 class Subcommand(str, enum.Enum):
@@ -130,7 +130,9 @@ def pylsp_format_document(workspace: Workspace, document: Document) -> Generator
         settings=settings, document_path=document.path, document_source=source
     )
 
-    settings.select = [ISORT_FIXES]  # clobber to just run import sorting
+    settings.select = [ISORT_FIXES]
+    if settings.format:
+        settings.select.extend(settings.format)
     new_text = run_ruff(
         settings=settings,
         document_path=document.path,
