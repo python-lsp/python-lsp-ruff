@@ -5,7 +5,7 @@ import re
 import sys
 from pathlib import PurePath
 from subprocess import PIPE, Popen
-from typing import Dict, Final, Generator, List, Optional
+from typing import Dict, Generator, List, Optional
 
 if sys.version_info >= (3, 11):
     import tomllib
@@ -61,8 +61,6 @@ DIAGNOSTIC_SEVERITIES = {
     "I": DiagnosticSeverity.Information,
     "H": DiagnosticSeverity.Hint,
 }
-
-ISORT_FIXES: Final = "I"
 
 
 class Subcommand(str, enum.Enum):
@@ -130,15 +128,16 @@ def pylsp_format_document(workspace: Workspace, document: Document) -> Generator
         settings=settings, document_path=document.path, document_source=source
     )
 
-    settings.select = [ISORT_FIXES]
     if settings.format:
-        settings.select.extend(settings.format)
-    new_text = run_ruff(
-        settings=settings,
-        document_path=document.path,
-        document_source=new_text,
-        fix=True,
-    )
+        # A second pass through the document with `ruff check` and only the rules
+        # enabled via the format config property. This allows for things like
+        # specifying `format = ["I"]` to get import sorting as part of formatting.
+        new_text = run_ruff(
+            settings=PluginSettings(ignore=["ALL"], select=settings.format),
+            document_path=document.path,
+            document_source=new_text,
+            fix=True,
+        )
 
     # Avoid applying empty text edit
     if not new_text or new_text == source:

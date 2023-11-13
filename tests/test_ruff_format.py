@@ -11,6 +11,41 @@ from pylsp.workspace import Document, Workspace
 
 import pylsp_ruff.plugin as plugin
 
+_UNSORTED_IMPORTS = tw.dedent(
+    """
+    from thirdparty import x
+    import io
+    import asyncio
+    """
+).strip()
+
+_SORTED_IMPORTS = tw.dedent(
+    """
+    import asyncio
+    import io
+
+    from thirdparty import x
+    """
+).strip()
+
+_UNFORMATTED_CODE = tw.dedent(
+    """
+    def foo(): pass
+    def bar(): pass
+    """
+).strip()
+
+_FORMATTED_CODE = tw.dedent(
+    """
+    def foo():
+        pass
+
+
+    def bar():
+        pass
+    """
+).strip()
+
 
 @pytest.fixture()
 def workspace(tmp_path):
@@ -54,40 +89,26 @@ def run_plugin_format(workspace: Workspace, doc: Document) -> str:
     return pytest.fail()
 
 
-def test_ruff_format(workspace):
-    # imports incorrectly ordered,
-    # body of foo has a line that's too long
-    # def bar() line missing whitespace above
-    txt = tw.dedent(
-        """
-        from thirdparty import x
-        import io
-        import asyncio
-
-        def foo():
-            print("this is a looooooooooooooooooooooooooooooooooooooooooooong line that should exceed the usual line-length limit which is normally eighty-eight columns")
-        def bar():
-            pass
-        """  # noqa: E501
-    ).lstrip()
-    want = tw.dedent(
-        """
-        import asyncio
-        import io
-
-        from thirdparty import x
-
-
-        def foo():
-            print(
-                "this is a looooooooooooooooooooooooooooooooooooooooooooong line that should exceed the usual line-length limit which is normally eighty-eight columns"
-            )
-
-
-        def bar():
-            pass
-        """  # noqa: E501
-    ).lstrip()
+def test_ruff_format_only(workspace):
+    txt = f"{_UNSORTED_IMPORTS}\n{_UNFORMATTED_CODE}"
+    want = f"{_UNSORTED_IMPORTS}\n\n\n{_FORMATTED_CODE}\n"
     _, doc = temp_document(txt, workspace)
     got = run_plugin_format(workspace, doc)
-    assert want == got, f"want:\n{want}\n\ngot:\n{got}"
+    assert want == got
+
+
+def test_ruff_format_and_sort_imports(workspace):
+    txt = f"{_UNSORTED_IMPORTS}\n{_UNFORMATTED_CODE}"
+    want = f"{_SORTED_IMPORTS}\n\n\n{_FORMATTED_CODE}\n"
+    _, doc = temp_document(txt, workspace)
+    workspace._config.update(
+        {
+            "plugins": {
+                "ruff": {
+                    "format": ["I001"],
+                }
+            }
+        }
+    )
+    got = run_plugin_format(workspace, doc)
+    assert want == got
