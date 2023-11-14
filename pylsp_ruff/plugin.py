@@ -516,6 +516,7 @@ def build_arguments(
     args.append("--exit-zero")
     # Use the json formatting for easier evaluation
     args.append("--output-format=json")
+    args.append("--extension=ipynb:python")
     if fix:
         args.append("--fix")
     else:
@@ -556,11 +557,6 @@ def build_arguments(
             if not PurePath(document_path).match(path):
                 continue
             args.append(f"--ignore={','.join(errors)}")
-    if settings.extension:
-        extension_pairs = ",".join(
-            f"{ext}:{lang}" for ext, lang in settings.extension.items()
-        )
-        args.append(f"--extension={extension_pairs}")
 
     if extra_arguments:
         args.extend(extra_arguments)

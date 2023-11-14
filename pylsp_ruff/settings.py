@@ -27,8 +27,6 @@ class PluginSettings:
 
     severities: Optional[Dict[str, str]] = None
 
-    extension: Optional[Dict[str, str]] = None
-
 
 def to_camel_case(snake_str: str) -> str:
     components = snake_str.split("_")

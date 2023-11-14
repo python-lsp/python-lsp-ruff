@@ -85,7 +85,6 @@ def test_ruff_config_param(workspace):
                         "config": ruff_conf,
                         "extendSelect": ["D", "F"],
                         "extendIgnore": ["E"],
-                        "extension": {"ipynb": "python"},
                     }
                 }
             }
@@ -97,7 +96,6 @@ def test_ruff_config_param(workspace):
         assert f"--config={ruff_conf}" in call_args
         assert "--extend-select=D,F" in call_args
         assert "--extend-ignore=E" in call_args
-        assert "--extension=ipynb:python" in call_args
 
 
 def test_ruff_executable_param(workspace):
@@ -183,6 +181,7 @@ def f():
         "--quiet",
         "--exit-zero",
         "--output-format=json",
+        "--extension=ipynb:python",
         "--no-fix",
         "--force-exclude",
         f"--stdin-filename={os.path.join(workspace.root_path, '__init__.py')}",
@@ -258,20 +257,6 @@ def f():
     workspace.put_document(doc_uri, doc_str)
     doc = workspace.get_document(doc_uri)
 
-    diags = ruff_lint.pylsp_lint(workspace, doc)
-    # without the extension option, we get a syntax error because ruff expects JSON
-    assert len(diags)
-    assert diags[0]["code"] == "E999"
-
-    workspace._config.update(
-        {
-            "plugins": {
-                "ruff": {
-                    "extension": {"ipynb": "python"},
-                }
-            }
-        }
-    )
     diags = ruff_lint.pylsp_lint(workspace, doc)
     diag_codes = [diag["code"] for diag in diags]
     assert "E999" not in diag_codes
