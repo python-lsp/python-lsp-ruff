@@ -551,6 +551,9 @@ def build_arguments(
     if settings.extend_ignore:
         args.append(f"--extend-ignore={','.join(settings.extend_ignore)}")
 
+    if settings.target_version:
+        args.append(f"--target-version={settings.target_version}")
+
     if settings.per_file_ignores:
         for path, errors in settings.per_file_ignores.items():
             if not PurePath(document_path).match(path):
