@@ -238,9 +238,10 @@ def pylsp_code_actions(
         if diagnostic.data:  # Has fix
             fix = converter.structure(diagnostic.data, RuffFix)
 
-            # Ignore fix if marked as unsafe and unsafe_fixes are disabled
-            if fix.applicability != "safe" and not settings.unsafe_fixes:
-                continue
+            if fix.applicability == "unsafe":
+                if not settings.unsafe_fixes:
+                    continue
+                fix.message += " (unsafe)"
 
             if diagnostic.code == "I001":
                 code_actions.append(
@@ -358,6 +359,9 @@ def create_fix_all_code_action(
 ) -> CodeAction:
     title = "Ruff: Fix All"
     kind = CodeActionKind.SourceFixAll
+
+    # No unsafe fixes for 'Fix all', see https://github.com/python-lsp/python-lsp-ruff/issues/55
+    settings.unsafe_fixes = False
 
     new_text = run_ruff_fix(document=document, settings=settings)
     range = Range(

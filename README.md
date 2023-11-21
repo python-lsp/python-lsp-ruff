@@ -50,6 +50,12 @@ lspconfig.pylsp.setup {
 }
 ```
 
+## Code actions
+
+`python-lsp-ruff` supports code actions as given by possible fixes by `ruff`. `python-lsp-ruff` also supports [unsafe fixes](https://docs.astral.sh/ruff/linter/#fix-safety).
+Fixes considered unsafe by `ruff` are marked `(unsafe)` in the code action.
+The `Fix all` code action *only* consideres safe fixes.
+
 ## Configuration
 
 Configuration options can be passed to the python-language-server. If a `pyproject.toml`
