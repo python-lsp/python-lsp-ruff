@@ -646,6 +646,15 @@ def build_format_arguments(
     if settings.exclude:
         args.append(f"--exclude={','.join(settings.exclude)}")
 
+    if settings.preview:
+        args.append("--preview")
+
+    if settings.line_length:
+        args.append(f"--line-length={settings.line_length}")
+
+    if settings.target_version:
+        args.append(f"--target-version={settings.target_version}")
+
     if extra_arguments:
         args.extend(extra_arguments)
 
