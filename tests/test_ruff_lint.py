@@ -182,6 +182,7 @@ def f():
         "--quiet",
         "--exit-zero",
         "--output-format=json",
+        "--extension=ipynb:python",
         "--no-fix",
         "--force-exclude",
         f"--stdin-filename={os.path.join(workspace.root_path, '__init__.py')}",
@@ -243,3 +244,23 @@ def f():
         assert diag["code"] != "F401"
 
     os.unlink(os.path.join(workspace.root_path, "pyproject.toml"))
+
+
+def test_notebook_input(workspace):
+    doc_str = r"""
+print('hi')
+import os
+def f():
+    a = 2
+"""
+    # attribute the python code to a notebook file name per jupyterlab-lsp
+    doc_uri = uris.from_fs_path(os.path.join(workspace.root_path, "Untitled.ipynb"))
+    workspace.put_document(doc_uri, doc_str)
+    doc = workspace.get_document(doc_uri)
+
+    diags = ruff_lint.pylsp_lint(workspace, doc)
+    diag_codes = [diag["code"] for diag in diags]
+    assert "E999" not in diag_codes
+    assert "E402" in diag_codes
+    assert "F401" in diag_codes
+    assert "F841" in diag_codes

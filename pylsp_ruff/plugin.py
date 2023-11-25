@@ -553,6 +553,7 @@ def build_check_arguments(
     args.append("--exit-zero")
     # Use the json formatting for easier evaluation
     args.append("--output-format=json")
+    args.append("--extension=ipynb:python")
     if fix:
         args.append("--fix")
     else:
