@@ -28,61 +28,43 @@ pip install "ruff<0.1.0" "python-lsp-ruff==1.5.3"
 
 This plugin will disable `pycodestyle`, `pyflakes`, `mccabe` and `pyls_isort` by default, unless they are explicitly enabled in the client configuration.
 When enabled, all linting diagnostics will be provided by `ruff`.
-Sorting of the imports through `ruff` when formatting is enabled by default.
-The list of code fixes can be changed via the `pylsp.plugins.ruff.format` option.
 
 Any codes given in the `format` option will only be marked as `fixable` for ruff during the formatting operation, the user has to make sure that these codes are also in the list of codes that ruff checks!
 
-This example configuration for `neovim` shows how to always sort imports when running `textDocument/formatting`:
-
-```lua
-lspconfig.pylsp.setup {
-	settings = {
-		pylsp = {
-			plugins = {
-				ruff = {
-					enabled = true,
-					extendSelect = { "I" },
-				},
-			}
-		}
-	}
-}
-```
-
-## Code actions
-
-`python-lsp-ruff` supports code actions as given by possible fixes by `ruff`. `python-lsp-ruff` also supports [unsafe fixes](https://docs.astral.sh/ruff/linter/#fix-safety).
-Fixes considered unsafe by `ruff` are marked `(unsafe)` in the code action.
-The `Fix all` code action *only* consideres safe fixes.
 
 ## Configuration
 
 Configuration options can be passed to the python-language-server. If a `pyproject.toml`
-file is present in the project, `python-lsp-ruff` will use these configuration options.
-Note that any configuration options (except for `extendIgnore` and `extendSelect`, see
-[this issue](https://github.com/python-lsp/python-lsp-ruff/issues/19)) passed to ruff via
-`pylsp` are ignored if the project has a `pyproject.toml`.
+file is present in the project, `python-lsp-ruff` will ignore specific options (see below).
 
-The plugin follows [python-lsp-server's
-configuration](https://github.com/python-lsp/python-lsp-server/#configuration). These are
-the valid configuration keys:
+The plugin follows [python-lsp-server's configuration](https://github.com/python-lsp/python-lsp-server/#configuration).
+This example configuration using for `neovim` shows the possible optionsL
 
- - `pylsp.plugins.ruff.enabled`: Boolean to enable/disable the plugin. `true` by default.
- - `pylsp.plugins.ruff.config`: Path to optional `pyproject.toml` file.
- - `pylsp.plugins.ruff.exclude`: Exclude files from being checked by `ruff`.
- - `pylsp.plugins.ruff.executable`: Path to the `ruff` executable. Uses `os.executable -m "ruff"` by default.
- - `pylsp.plugins.ruff.ignore`: Error codes to ignore.
- - `pylsp.plugins.ruff.extendIgnore`: Same as ignore, but append to existing ignores.
- - `pylsp.plugins.ruff.lineLength`: Set the line-length for length checks.
- - `pylsp.plugins.ruff.perFileIgnores`: File-specific error codes to be ignored.
- - `pylsp.plugins.ruff.select`: List of error codes to enable.
- - `pylsp.plugins.ruff.extendSelect`: Same as select, but append to existing error codes.
- - `pylsp.plugins.ruff.format`: List of error codes to fix during formatting. Empty by default, use `["I"]` here to get import sorting as part of formatting.
- - `pylsp.plugins.ruff.unsafeFixes`: Boolean that enables/disables fixes that are marked "unsafe" by `ruff`. `false` by default.
- - `pylsp.plugins.ruff.preview`: Boolean that enables/disables rules & fixes that are marked "preview" by `ruff`. `false` by default.
- - `pylsp.plugins.ruff.severities`: Dictionary of custom severity levels for specific codes, see [below](#custom-severities).
- - `pylsp.plugins.ruff.targetVersion`: The minimum Python version to target.
+```lua
+pylsp = {
+  plugins = {
+    ruff = {
+      enabled = true,  -- Enable the plugin
+      executable = "<path-to-ruff-bin>",  -- Custom path to ruff
+      path = "<path_to_custom_ruff_toml>",  -- Custom config for ruff to use
+      extendSelect = { "I" },  -- Rules that are additionally used by ruff
+      extendIgnore = { "C90" },  -- Rules that are additionally ignored by ruff
+      format = { "I" },  -- Rules that are marked as fixable by ruff that should be fixed when running textDocument/formatting
+      severities = { ["D212"] = "I" },  -- Optional table of rules where a custom severity is desired
+      unsafeFixes = false,  -- Whether or not to offer unsafe fixes as code actions. Ignored with the "Fix All" action
+
+      -- Rules that are ignored when a pyproject.toml or ruff.toml is present:
+      lineLength = 88,  -- Line length to pass to ruff checking and formatting
+      exclude = { "__about__.py" },  -- Files to be excluded by ruff checking
+      select = { "F" },  -- Rules to be enabled by ruff
+      ignore = { "D210" },  -- Rules to be ignored by ruff
+      perFileIgnores = { ["__init__.py"] = "CPY001" },  -- Rules that should be ignored for specific files
+      preview = false,  -- Whether to enable the preview style linting and formatting.
+      targetVersion = "py310",  -- The minimum python version to target (applies for both linting and formatting).
+    },
+  }
+}
+```
 
 For more information on the configuration visit [Ruff's homepage](https://beta.ruff.rs/docs/configuration/).
 
@@ -95,3 +77,19 @@ For more information on the diagnostic severities please refer to
 [the official LSP reference](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#diagnosticSeverity).
 
 With `v2.0.0` it is also possible to use patterns to match codes. Rules match if the error code starts with the given pattern. If multiple patterns match the error code, `python-lsp-ruff` chooses the one with the most amount of matching characters.
+
+
+## Code formatting
+
+With `python-lsp-ruff>1.6.0` formatting is done using [ruffs own formatter](https://docs.astral.sh/ruff/formatter/).
+In addition, rules that should be fixed during the `textDocument/formatting` request can be added with the `format` option.
+
+Coming from previous versions the only change is that `isort` rules are **not** applied by default.
+To enable sorting of imports using ruff's isort functionality, add `"I"` to the list of `format` rules. 
+
+
+## Code actions
+
+`python-lsp-ruff` supports code actions as given by possible fixes by `ruff`. `python-lsp-ruff` also supports [unsafe fixes](https://docs.astral.sh/ruff/linter/#fix-safety).
+Fixes considered unsafe by `ruff` are marked `(unsafe)` in the code action.
+The `Fix all` code action *only* consideres safe fixes.
