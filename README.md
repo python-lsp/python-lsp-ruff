@@ -94,5 +94,4 @@ This default can be changed through the `pylsp.plugins.ruff.severities` option, 
 For more information on the diagnostic severities please refer to
 [the official LSP reference](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#diagnosticSeverity).
 
-Note that `python-lsp-ruff` does *not* accept regex, and it will *not* check whether the error code exists. If the custom severity level is not displayed,
-please check first that the error code is correct and that the given value is one of the possible keys from above.
+With `v2.0.0` it is also possible to use patterns to match codes. Rules match if the error code starts with the given pattern. If multiple patterns match the error code, `python-lsp-ruff` chooses the one with the most amount of matching characters.
