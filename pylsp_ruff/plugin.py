@@ -571,6 +571,9 @@ def build_check_arguments(
     if settings.line_length:
         args.append(f"--line-length={settings.line_length}")
 
+    if settings.preview:
+        args.append("--preview")
+
     if settings.unsafe_fixes:
         args.append("--unsafe-fixes")
 

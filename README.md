@@ -68,7 +68,7 @@ The plugin follows [python-lsp-server's
 configuration](https://github.com/python-lsp/python-lsp-server/#configuration). These are
 the valid configuration keys:
 
- - `pylsp.plugins.ruff.enabled`: boolean to enable/disable the plugin. `true` by default.
+ - `pylsp.plugins.ruff.enabled`: Boolean to enable/disable the plugin. `true` by default.
  - `pylsp.plugins.ruff.config`: Path to optional `pyproject.toml` file.
  - `pylsp.plugins.ruff.exclude`: Exclude files from being checked by `ruff`.
  - `pylsp.plugins.ruff.executable`: Path to the `ruff` executable. Uses `os.executable -m "ruff"` by default.
@@ -79,7 +79,8 @@ the valid configuration keys:
  - `pylsp.plugins.ruff.select`: List of error codes to enable.
  - `pylsp.plugins.ruff.extendSelect`: Same as select, but append to existing error codes.
  - `pylsp.plugins.ruff.format`: List of error codes to fix during formatting. Empty by default, use `["I"]` here to get import sorting as part of formatting.
- - `pylsp.plugins.ruff.unsafeFixes`: boolean that enables/disables fixes that are marked "unsafe" by `ruff`. `false` by default.
+ - `pylsp.plugins.ruff.unsafeFixes`: Boolean that enables/disables fixes that are marked "unsafe" by `ruff`. `false` by default.
+ - `pylsp.plugins.ruff.preview`: Boolean that enables/disables rules & fixes that are marked "preview" by `ruff`. `false` by default.
  - `pylsp.plugins.ruff.severities`: Dictionary of custom severity levels for specific codes, see [below](#custom-severities).
  - `pylsp.plugins.ruff.targetVersion`: The minimum Python version to target.
 
