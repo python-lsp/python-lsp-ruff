@@ -45,7 +45,7 @@ import_str = dedent(
 codeactions = [
     "Ruff (F401): Remove unused import: `os`",
     "Ruff (F401): Disable for this line",
-    "Ruff (F841): Remove assignment to unused variable `a`",
+    "Ruff (F841): Remove assignment to unused variable `a` (unsafe)",
     "Ruff (F841): Disable for this line",
     "Ruff: Fix All",
 ]
@@ -70,7 +70,9 @@ def temp_document(doc_text, workspace):
 def test_ruff_code_actions(workspace):
     _, doc = temp_document(codeaction_str, workspace)
 
-    workspace._config.update({"plugins": {"ruff": {"select": ["F"]}}})
+    workspace._config.update(
+        {"plugins": {"ruff": {"select": ["F"], "unsafeFixes": True}}}
+    )
     diags = ruff_lint.pylsp_lint(workspace, doc)
     range_ = cattrs.unstructure(
         Range(start=Position(line=0, character=0), end=Position(line=0, character=0))
@@ -79,8 +81,8 @@ def test_ruff_code_actions(workspace):
         workspace._config, workspace, doc, range=range_, context={"diagnostics": diags}
     )
     actions = converter.structure(actions, List[CodeAction])
-    for action in actions:
-        assert action.title in codeactions
+    action_titles = list(map(lambda action: action.title, actions))
+    assert sorted(codeactions) == sorted(action_titles)
 
 
 def test_import_action(workspace):
@@ -104,8 +106,8 @@ def test_import_action(workspace):
         workspace._config, workspace, doc, range=range_, context={"diagnostics": diags}
     )
     actions = converter.structure(actions, List[CodeAction])
-    for action in actions:
-        assert action.title in codeactions_import
+    action_titles = list(map(lambda action: action.title, actions))
+    assert sorted(codeactions_import) == sorted(action_titles)
 
 
 def test_fix_all(workspace):
