@@ -81,6 +81,7 @@ the valid configuration keys:
  - `pylsp.plugins.ruff.format`: List of error codes to fix during formatting. Empty by default, use `["I"]` here to get import sorting as part of formatting.
  - `pylsp.plugins.ruff.unsafeFixes`: boolean that enables/disables fixes that are marked "unsafe" by `ruff`. `false` by default.
  - `pylsp.plugins.ruff.severities`: Dictionary of custom severity levels for specific codes, see [below](#custom-severities).
+ - `pylsp.plugins.ruff.targetVersion`: The minimum Python version to target.
 
 For more information on the configuration visit [Ruff's homepage](https://beta.ruff.rs/docs/configuration/).
 
