@@ -50,6 +50,12 @@ lspconfig.pylsp.setup {
 }
 ```
 
+## Code actions
+
+`python-lsp-ruff` supports code actions as given by possible fixes by `ruff`. `python-lsp-ruff` also supports [unsafe fixes](https://docs.astral.sh/ruff/linter/#fix-safety).
+Fixes considered unsafe by `ruff` are marked `(unsafe)` in the code action.
+The `Fix all` code action *only* consideres safe fixes.
+
 ## Configuration
 
 Configuration options can be passed to the python-language-server. If a `pyproject.toml`
@@ -72,10 +78,11 @@ the valid configuration keys:
  - `pylsp.plugins.ruff.perFileIgnores`: File-specific error codes to be ignored.
  - `pylsp.plugins.ruff.select`: List of error codes to enable.
  - `pylsp.plugins.ruff.extendSelect`: Same as select, but append to existing error codes.
- - `pylsp.plugins.ruff.format`: List of error codes to fix during formatting. The default is `["I"]`, any additional codes are appended to this list.
+ - `pylsp.plugins.ruff.format`: List of error codes to fix during formatting. Empty by default, use `["I"]` here to get import sorting as part of formatting.
  - `pylsp.plugins.ruff.unsafeFixes`: Boolean that enables/disables fixes that are marked "unsafe" by `ruff`. `false` by default.
  - `pylsp.plugins.ruff.preview`: Boolean that enables/disables rules & fixes that are marked "preview" by `ruff`. `false` by default.
  - `pylsp.plugins.ruff.severities`: Dictionary of custom severity levels for specific codes, see [below](#custom-severities).
+ - `pylsp.plugins.ruff.targetVersion`: The minimum Python version to target.
 
 For more information on the configuration visit [Ruff's homepage](https://beta.ruff.rs/docs/configuration/).
 

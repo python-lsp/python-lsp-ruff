@@ -1,3 +1,4 @@
+import enum
 import json
 import logging
 import re
@@ -45,6 +46,7 @@ NOQA_REGEX = re.compile(
     r"(?::\s?(?P<codes>([A-Z]+[0-9]+(?:[,\s]+)?)+))?"
 )
 
+
 UNNECESSITY_CODES = {
     "F401",  # `module` imported but unused
     "F504",  # % format unused named arguments
@@ -59,6 +61,29 @@ DIAGNOSTIC_SEVERITIES = {
     "I": DiagnosticSeverity.Information,
     "H": DiagnosticSeverity.Hint,
 }
+
+
+class Subcommand(str, enum.Enum):
+    CHECK = "check"
+    FORMAT = "format"
+
+    def __str__(self) -> str:
+        return self.value
+
+    def build_args(
+        self,
+        document_path: str,
+        settings: PluginSettings,
+        fix: bool = False,
+        extra_arguments: Optional[List[str]] = None,
+    ) -> List[str]:
+        if self == Subcommand.CHECK:
+            return build_check_arguments(document_path, settings, fix, extra_arguments)
+        elif self == Subcommand.FORMAT:
+            return build_format_arguments(document_path, settings, extra_arguments)
+        else:
+            logging.warn(f"subcommand without argument builder '{self}'")
+        return []
 
 
 @hookimpl
@@ -103,8 +128,19 @@ def pylsp_format_document(workspace: Workspace, document: Document) -> Generator
         settings=settings, document_path=document.path, document_source=source
     )
 
+    if settings.format:
+        # A second pass through the document with `ruff check` and only the rules
+        # enabled via the format config property. This allows for things like
+        # specifying `format = ["I"]` to get import sorting as part of formatting.
+        new_text = run_ruff(
+            settings=PluginSettings(ignore=["ALL"], select=settings.format),
+            document_path=document.path,
+            document_source=new_text,
+            fix=True,
+        )
+
     # Avoid applying empty text edit
-    if new_text == source:
+    if not new_text or new_text == source:
         return
 
     range = Range(
@@ -238,9 +274,10 @@ def pylsp_code_actions(
         if diagnostic.data:  # Has fix
             fix = converter.structure(diagnostic.data, RuffFix)
 
-            # Ignore fix if marked as unsafe and unsafe_fixes are disabled
-            if fix.applicability != "safe" and not settings.unsafe_fixes:
-                continue
+            if fix.applicability == "unsafe":
+                if not settings.unsafe_fixes:
+                    continue
+                fix.message += " (unsafe)"
 
             if diagnostic.code == "I001":
                 code_actions.append(
@@ -359,6 +396,9 @@ def create_fix_all_code_action(
     title = "Ruff: Fix All"
     kind = CodeActionKind.SourceFixAll
 
+    # No unsafe fixes for 'Fix all', see https://github.com/python-lsp/python-lsp-ruff/issues/55
+    settings.unsafe_fixes = False
+
     new_text = run_ruff_fix(document=document, settings=settings)
     range = Range(
         start=Position(line=0, character=0),
@@ -395,6 +435,7 @@ def run_ruff_check(document: Document, settings: PluginSettings) -> List[RuffChe
         document_path=document.path,
         document_source=document.source,
         settings=settings,
+        subcommand=Subcommand.CHECK,
     )
     try:
         result = json.loads(result)
@@ -418,26 +459,19 @@ def run_ruff_format(
     document_path: str,
     document_source: str,
 ) -> str:
-    fixable_codes = ["I"]
-    if settings.format:
-        fixable_codes.extend(settings.format)
-    extra_arguments = [
-        f"--fixable={','.join(fixable_codes)}",
-    ]
-    result = run_ruff(
+    return run_ruff(
         settings=settings,
         document_path=document_path,
         document_source=document_source,
-        fix=True,
-        extra_arguments=extra_arguments,
+        subcommand=Subcommand.FORMAT,
     )
-    return result
 
 
 def run_ruff(
     settings: PluginSettings,
     document_path: str,
     document_source: str,
+    subcommand: Subcommand = Subcommand.CHECK,
     fix: bool = False,
     extra_arguments: Optional[List[str]] = None,
 ) -> str:
@@ -453,6 +487,8 @@ def run_ruff(
     document_source : str
         Document source or to apply ruff on.
         Needed when the source differs from the file source, e.g. during formatting.
+    subcommand: Subcommand
+        The ruff subcommand to run. Default = Subcommand.CHECK.
     fix : bool
         Whether to run fix or no-fix.
     extra_arguments : List[str]
@@ -463,7 +499,8 @@ def run_ruff(
     String containing the result in json format.
     """
     executable = settings.executable
-    arguments = build_arguments(document_path, settings, fix, extra_arguments)
+
+    arguments = subcommand.build_args(document_path, settings, fix, extra_arguments)
 
     if executable is not None:
         log.debug(f"Calling {executable} with args: {arguments} on '{document_path}'")
@@ -474,7 +511,7 @@ def run_ruff(
         except Exception:
             log.error(f"Can't execute ruff with given executable '{executable}'.")
     else:
-        cmd = [sys.executable, "-m", "ruff"]
+        cmd = [sys.executable, "-m", "ruff", str(subcommand)]
         cmd.extend(arguments)
         p = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
     (stdout, stderr) = p.communicate(document_source.encode())
@@ -485,14 +522,14 @@ def run_ruff(
     return stdout.decode()
 
 
-def build_arguments(
+def build_check_arguments(
     document_path: str,
     settings: PluginSettings,
     fix: bool = False,
     extra_arguments: Optional[List[str]] = None,
 ) -> List[str]:
     """
-    Build arguments for ruff.
+    Build arguments for ruff check.
 
     Parameters
     ----------
@@ -516,6 +553,7 @@ def build_arguments(
     args.append("--exit-zero")
     # Use the json formatting for easier evaluation
     args.append("--output-format=json")
+    args.append("--extension=ipynb:python")
     if fix:
         args.append("--fix")
     else:
@@ -554,11 +592,59 @@ def build_arguments(
     if settings.extend_ignore:
         args.append(f"--extend-ignore={','.join(settings.extend_ignore)}")
 
+    if settings.target_version:
+        args.append(f"--target-version={settings.target_version}")
+
     if settings.per_file_ignores:
         for path, errors in settings.per_file_ignores.items():
             if not PurePath(document_path).match(path):
                 continue
             args.append(f"--ignore={','.join(errors)}")
+
+    if extra_arguments:
+        args.extend(extra_arguments)
+
+    args.extend(["--", "-"])
+
+    return args
+
+
+def build_format_arguments(
+    document_path: str,
+    settings: PluginSettings,
+    extra_arguments: Optional[List[str]] = None,
+) -> List[str]:
+    """
+    Build arguments for ruff format.
+
+    Parameters
+    ----------
+    document : pylsp.workspace.Document
+        Document to apply ruff on.
+    settings : PluginSettings
+        Settings to use for arguments to pass to ruff.
+    extra_arguments : List[str]
+        Extra arguments to pass to ruff.
+
+    Returns
+    -------
+    List containing the arguments.
+    """
+    args = []
+    # Suppress update announcements
+    args.append("--quiet")
+
+    # Always force excludes
+    args.append("--force-exclude")
+    # Pass filename to ruff for per-file-ignores, catch unsaved
+    if document_path != "":
+        args.append(f"--stdin-filename={document_path}")
+
+    if settings.config:
+        args.append(f"--config={settings.config}")
+
+    if settings.exclude:
+        args.append(f"--exclude={','.join(settings.exclude)}")
 
     if extra_arguments:
         args.extend(extra_arguments)
