@@ -207,10 +207,18 @@ def create_diagnostic(check: RuffCheck, settings: PluginSettings) -> Diagnostic:
     if check.code == "E999" or check.code[0] == "F":
         severity = DiagnosticSeverity.Error
 
-    # Override severity with custom severity if possible, use default otherwise
+    # Check if check.code starts contained in given severities
     if settings.severities is not None:
-        custom_sev = settings.severities.get(check.code, None)
-        if custom_sev is not None:
+        _custom_sev = [
+            sev
+            for pat, sev in sorted(
+                settings.severities.items(), key=lambda key: (len(key), key)
+            )
+            if check.code.startswith(pat)
+        ]
+
+        if _custom_sev:
+            custom_sev = _custom_sev[-1]
             severity = DIAGNOSTIC_SEVERITIES.get(custom_sev, severity)
 
     tags = []
