@@ -6,7 +6,6 @@ from textwrap import dedent
 from typing import List
 from unittest.mock import Mock
 
-import cattrs
 import pytest
 from lsprotocol.converters import get_converter
 from lsprotocol.types import CodeAction, Position, Range
