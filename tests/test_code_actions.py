@@ -52,7 +52,6 @@ codeactions = [
 
 codeactions_import = [
     "Ruff: Organize imports",
-    "Ruff: Fix All",
     "Ruff (I001): Disable for this line",
 ]
 
@@ -75,7 +74,10 @@ def test_ruff_code_actions(workspace):
     )
     diags = ruff_lint.pylsp_lint(workspace, doc)
     range_ = cattrs.unstructure(
-        Range(start=Position(line=0, character=0), end=Position(line=0, character=0))
+        Range(
+            start=Position(line=0, character=0),
+            end=Position(line=(len(doc.lines) - 1), character=0),
+        )
     )
     actions = ruff_lint.pylsp_code_actions(
         workspace._config, workspace, doc, range=range_, context={"diagnostics": diags}
@@ -100,7 +102,10 @@ def test_import_action(workspace):
 
     diags = ruff_lint.pylsp_lint(workspace, doc)
     range_ = cattrs.unstructure(
-        Range(start=Position(line=0, character=0), end=Position(line=0, character=0))
+        Range(
+            start=Position(line=0, character=0),
+            end=Position(line=(len(doc.lines) - 1), character=0),
+        )
     )
     actions = ruff_lint.pylsp_code_actions(
         workspace._config, workspace, doc, range=range_, context={"diagnostics": diags}

@@ -256,7 +256,7 @@ def pylsp_code_actions(
     document : pylsp.workspace.Document
         Document to apply ruff on.
     range : Dict
-        Range argument given by pylsp. Not used here.
+        Range argument given by pylsp.
     context : Dict
         CodeActionContext given as dict.
 
@@ -301,8 +301,9 @@ def pylsp_code_actions(
                     ),
                 )
 
+    range = converter.structure(range, Range)
     checks = run_ruff_check(document=document, settings=settings)
-    checks_with_fixes = [c for c in checks if c.fix]
+    checks_with_fixes = [c for c in checks if c.fix and c.location.row - 1 >= range.start.line and c.end_location.row - 1 <= range.end.line]
     checks_organize_imports = [c for c in checks_with_fixes if c.code == "I001"]
 
     if not has_organize_imports and checks_organize_imports:
@@ -320,7 +321,7 @@ def pylsp_code_actions(
 
     if checks_with_fixes:
         code_actions.append(
-            create_fix_all_code_action(document=document, settings=settings),
+            create_fix_all_code_action(document=document, settings=settings, range=range),
         )
 
     return converter.unstructure(code_actions)
@@ -400,6 +401,7 @@ def create_organize_imports_code_action(
 def create_fix_all_code_action(
     document: Document,
     settings: PluginSettings,
+    range: Range,
 ) -> CodeAction:
     title = "Ruff: Fix All"
     kind = CodeActionKind.SourceFixAll
@@ -408,10 +410,6 @@ def create_fix_all_code_action(
     settings.unsafe_fixes = False
 
     new_text = run_ruff_fix(document=document, settings=settings)
-    range = Range(
-        start=Position(line=0, character=0),
-        end=Position(line=len(document.lines), character=0),
-    )
     text_edit = TextEdit(range=range, new_text=new_text)
     workspace_edit = WorkspaceEdit(changes={document.uri: [text_edit]})
     return CodeAction(
