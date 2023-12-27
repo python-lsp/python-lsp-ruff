@@ -241,7 +241,7 @@ def pylsp_code_actions(
     config: Config,
     workspace: Workspace,
     document: Document,
-    range: Dict,
+    range: Range,
     context: Dict,
 ) -> List[Dict]:
     """
@@ -255,7 +255,7 @@ def pylsp_code_actions(
         Current workspace.
     document : pylsp.workspace.Document
         Document to apply ruff on.
-    range : Dict
+    range : Range
         Range argument given by pylsp.
     context : Dict
         CodeActionContext given as dict.
@@ -301,7 +301,6 @@ def pylsp_code_actions(
                     ),
                 )
 
-    range = converter.structure(range, Range)
     checks = run_ruff_check(document=document, settings=settings)
     checks_with_fixes = [
         c
