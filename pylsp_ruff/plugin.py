@@ -322,8 +322,8 @@ def pylsp_code_actions(
     checks_with_fixes = [
         c
         for c in checks_with_fixes
-        if c.location.row - 1 >= range.start.line
-        and c.end_location.row - 1 <= range.end.line
+        if c.location.row - 1 >= range.start.line  # type: ignore
+        and c.end_location.row - 1 <= range.end.line  # type: ignore
     ]
     if checks_with_fixes:
         code_actions.append(
