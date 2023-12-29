@@ -145,7 +145,7 @@ def pylsp_format_document(workspace: Workspace, document: Document) -> Generator
 
     range = Range(
         start=Position(line=0, character=0),
-        end=Position(line=len(document.lines), character=0),
+        end=Position(line=(len(document.lines)-1), character=0),
     )
     text_edit = TextEdit(range=range, new_text=new_text)
 
@@ -410,7 +410,7 @@ def create_fix_all_code_action(
     new_text = run_ruff_fix(document=document, settings=settings)
     range = Range(
         start=Position(line=0, character=0),
-        end=Position(line=len(document.lines), character=0),
+        end=Position(line=(len(document.lines)-1), character=0),
     )
     text_edit = TextEdit(range=range, new_text=new_text)
     workspace_edit = WorkspaceEdit(changes={document.uri: [text_edit]})
