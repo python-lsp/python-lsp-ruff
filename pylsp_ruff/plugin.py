@@ -514,7 +514,7 @@ def run_ruff(
     if executable is not None:
         log.debug(f"Calling {executable} with args: {arguments} on '{document_path}'")
         try:
-            cmd = [executable]
+            cmd = [executable, str(subcommand)]
             cmd.extend(arguments)
             p = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
         except Exception:
