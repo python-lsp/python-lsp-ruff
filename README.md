@@ -5,7 +5,7 @@
 [![Python](https://github.com/python-lsp/python-lsp-ruff/actions/workflows/python.yml/badge.svg)](https://github.com/python-lsp/python-lsp-ruff/actions/workflows/python.yml)
 
 `python-lsp-ruff` is a plugin for `python-lsp-server` that adds linting, code action and formatting capabilities that are provided by [ruff](https://github.com/charliermarsh/ruff),
-an extremely fast Python linter written in Rust.
+an extremely fast Python linter and formatter written in Rust.
 
 ## Install
 
@@ -26,8 +26,8 @@ pip install "ruff<0.1.0" "python-lsp-ruff==1.5.3"
 
 ## Usage
 
-This plugin will disable `pycodestyle`, `pyflakes`, `mccabe` and `pyls_isort` by default, unless they are explicitly enabled in the client configuration.
-When enabled, all linting diagnostics will be provided by `ruff`.
+This plugin will disable `pycodestyle`, `pyflakes`, `mccabe`, `pyls_isort`, `autopep8`, and `yapf` by default, unless they are explicitly enabled in the client configuration.
+When `python-lsp-ruff` is enabled, all linting diagnostics and formatting capabilities will be provided by `ruff`.
 
 Any codes given in the `format` option will only be marked as `fixable` for ruff during the formatting operation, the user has to make sure that these codes are also in the list of codes that ruff checks!
 
@@ -38,7 +38,7 @@ Configuration options can be passed to the python-language-server. If a `pyproje
 file is present in the project, `python-lsp-ruff` will ignore specific options (see below).
 
 The plugin follows [python-lsp-server's configuration](https://github.com/python-lsp/python-lsp-server/#configuration).
-This example configuration using for `neovim` shows the possible optionsL
+This example configuration using for `neovim` shows the possible options:
 
 ```lua
 pylsp = {

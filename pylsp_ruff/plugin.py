@@ -98,6 +98,8 @@ def pylsp_settings():
             "mccabe": {"enabled": False},
             "pycodestyle": {"enabled": False},
             "pyls_isort": {"enabled": False},
+            "yapf": {"enabled": False},
+            "autopep8": {"enabled": False},
         }
     }
     return converter.unstructure(settings)
