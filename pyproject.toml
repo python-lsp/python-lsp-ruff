@@ -16,7 +16,7 @@ dependencies = [
   "ruff>=0.2.0, <0.3.0",
   "python-lsp-server",
 	"cattrs!=23.2.1",
-  "lsprotocol>=2022.0.0a1",
+  "lsprotocol>=2023.0.1",
   "tomli>=1.1.0; python_version < '3.11'",
 ]
 
