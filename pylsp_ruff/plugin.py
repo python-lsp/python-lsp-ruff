@@ -97,7 +97,6 @@ def pylsp_settings():
             "pyflakes": {"enabled": False},
             "mccabe": {"enabled": False},
             "pycodestyle": {"enabled": False},
-            "pyls_isort": {"enabled": False},
             "yapf": {"enabled": False},
             "autopep8": {"enabled": False},
         }

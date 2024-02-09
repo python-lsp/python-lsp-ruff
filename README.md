@@ -26,7 +26,7 @@ pip install "ruff<0.1.0" "python-lsp-ruff==1.5.3"
 
 ## Usage
 
-This plugin will disable `pycodestyle`, `pyflakes`, `mccabe`, `pyls_isort`, `autopep8`, and `yapf` by default, unless they are explicitly enabled in the client configuration.
+This plugin will disable `pycodestyle`, `pyflakes`, `mccabe`, `autopep8`, and `yapf` by default, unless they are explicitly enabled in the client configuration.
 When `python-lsp-ruff` is enabled, all linting diagnostics and formatting capabilities will be provided by `ruff`.
 
 Any codes given in the `format` option will only be marked as `fixable` for ruff during the formatting operation, the user has to make sure that these codes are also in the list of codes that ruff checks!
