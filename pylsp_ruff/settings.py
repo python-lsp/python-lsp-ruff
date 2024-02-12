@@ -24,7 +24,7 @@ class PluginSettings:
     format: Optional[List[str]] = None
 
     preview: bool = False
-    unsafe_fixes: bool = False
+    unsafe_fixes: bool = True
 
     severities: Optional[Dict[str, str]] = None
 
