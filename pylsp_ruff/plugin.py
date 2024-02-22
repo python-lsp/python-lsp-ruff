@@ -125,6 +125,9 @@ def pylsp_format_document(workspace: Workspace, document: Document) -> Generator
         source = document.source
 
     settings = load_settings(workspace=workspace, document_path=document.path)
+    if not settings.format_enabled:
+        return
+
     new_text = run_ruff_format(
         settings=settings, document_path=document.path, document_source=source
     )
@@ -720,6 +723,7 @@ def load_settings(workspace: Workspace, document_path: str) -> PluginSettings:
         # Leave config to pyproject.toml
         return PluginSettings(
             enabled=plugin_settings.enabled,
+            format_enabled=plugin_settings.format_enabled,
             executable=plugin_settings.executable,
             unsafe_fixes=plugin_settings.unsafe_fixes,
             extend_ignore=plugin_settings.extend_ignore,

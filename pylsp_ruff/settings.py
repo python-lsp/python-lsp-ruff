@@ -8,6 +8,7 @@ from cattrs.gen import make_dict_structure_fn, make_dict_unstructure_fn, overrid
 @dataclass
 class PluginSettings:
     enabled: bool = True
+    format_enabled: bool = True
     executable: Optional[str] = None
     config: Optional[str] = None
     line_length: Optional[int] = None
