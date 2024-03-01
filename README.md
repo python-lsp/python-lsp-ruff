@@ -45,6 +45,7 @@ pylsp = {
   plugins = {
     ruff = {
       enabled = true,  -- Enable the plugin
+      formatEnabled = true,  -- Enable formatting using ruffs formatter
       executable = "<path-to-ruff-bin>",  -- Custom path to ruff
       config = "<path_to_custom_ruff_toml>",  -- Custom config for ruff to use
       extendSelect = { "I" },  -- Rules that are additionally used by ruff
@@ -81,8 +82,9 @@ With `v2.0.0` it is also possible to use patterns to match codes. Rules match if
 
 ## Code formatting
 
-With `python-lsp-ruff>1.6.0` formatting is done using [ruffs own formatter](https://docs.astral.sh/ruff/formatter/).
-In addition, rules that should be fixed during the `textDocument/formatting` request can be added with the `format` option.
+With `python-lsp-ruff>1.6.0` formatting is done using [ruffs own formatter](https://docs.astral.sh/ruff/formatter/) by default.
+Formatting using ruff can be explicitly disabled by setting `formatEnabled = false` in the LSP settings.
+Additional rules that should be fixed during the `textDocument/formatting` request can be added with the `format` option.
 
 Coming from previous versions the only change is that `isort` rules are **not** applied by default.
 To enable sorting of imports using ruff's isort functionality, add `"I"` to the list of `format` rules. 
