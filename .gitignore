@@ -1,2 +1,6 @@
 __pycache__/
 *.egg-info/
+
+*.swp
+tags
+/build/
