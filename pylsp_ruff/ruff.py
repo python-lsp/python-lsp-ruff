@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, Union
+from typing import List, Optional
 
 
 @dataclass
@@ -29,4 +29,4 @@ class Check:
     filename: str
     location: Location
     end_location: Location
-    fix: Union[Fix, None] = None
+    fix: Optional[Fix] = None
