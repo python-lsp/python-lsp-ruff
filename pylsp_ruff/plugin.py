@@ -307,6 +307,9 @@ def pylsp_code_actions(
 
     checks = run_ruff_check(document=document, settings=settings)
     checks_with_fixes = [c for c in checks if c.fix]
+    checks_with_fixall = [
+        c for c in checks_with_fixes if c.fix and c.fix.applicability == "safe"
+    ]
     checks_organize_imports = [c for c in checks_with_fixes if c.code == "I001"]
 
     if not has_organize_imports and checks_organize_imports:
@@ -322,7 +325,7 @@ def pylsp_code_actions(
             ]
         )
 
-    if checks_with_fixes:
+    if checks_with_fixall:
         code_actions.append(
             create_fix_all_code_action(document=document, settings=settings),
         )
