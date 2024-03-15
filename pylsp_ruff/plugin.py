@@ -405,7 +405,7 @@ def create_fix_all_code_action(
     document: Document,
     settings: PluginSettings,
 ) -> CodeAction:
-    title = "Ruff: Fix All (all safe fixes)"
+    title = "Ruff: Fix All (safe fixes)"
     kind = CodeActionKind.SourceFixAll
 
     # No unsafe fixes for 'Fix all', see https://github.com/python-lsp/python-lsp-ruff/issues/55

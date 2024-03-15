@@ -47,12 +47,12 @@ codeactions = [
     "Ruff (F401): Disable for this line",
     "Ruff (F841): Remove assignment to unused variable `a` (unsafe)",
     "Ruff (F841): Disable for this line",
-    "Ruff: Fix All (all safe fixes)",
+    "Ruff: Fix All (safe fixes)",
 ]
 
 codeactions_import = [
     "Ruff: Organize imports",
-    "Ruff: Fix All (all safe fixes)",
+    "Ruff: Fix All (safe fixes)",
     "Ruff (I001): Disable for this line",
 ]
 
