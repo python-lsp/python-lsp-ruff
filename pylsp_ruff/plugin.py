@@ -106,8 +106,7 @@ def pylsp_settings():
 
 @hookimpl(hookwrapper=True)
 def pylsp_format_document(workspace: Workspace, document: Document) -> Generator:
-    """
-    Provide formatting through ruff.
+    """Provide formatting through ruff.
 
     Parameters
     ----------
@@ -115,6 +114,7 @@ def pylsp_format_document(workspace: Workspace, document: Document) -> Generator
         Current workspace.
     document : pylsp.workspace.Document
         Document to apply ruff on.
+
     """
     log.debug(f"textDocument/formatting: {document}")
     outcome = yield
@@ -158,8 +158,7 @@ def pylsp_format_document(workspace: Workspace, document: Document) -> Generator
 
 @hookimpl
 def pylsp_lint(workspace: Workspace, document: Document) -> List[Dict]:
-    """
-    Register ruff as the linter.
+    """Register ruff as the linter.
 
     Parameters
     ----------
@@ -171,6 +170,7 @@ def pylsp_lint(workspace: Workspace, document: Document) -> List[Dict]:
     Returns
     -------
     List of dicts containing the diagnostics.
+
     """
     settings = load_settings(workspace, document.path)
     checks = run_ruff_check(document=document, settings=settings)
@@ -179,8 +179,7 @@ def pylsp_lint(workspace: Workspace, document: Document) -> List[Dict]:
 
 
 def create_diagnostic(check: RuffCheck, settings: PluginSettings) -> Diagnostic:
-    """
-    Create a LSP diagnostic based on the given RuffCheck object.
+    """Create a LSP diagnostic based on the given RuffCheck object.
 
     Parameters
     ----------
@@ -192,6 +191,7 @@ def create_diagnostic(check: RuffCheck, settings: PluginSettings) -> Diagnostic:
     Returns
     -------
     Diagnostic
+
     """
     # Adapt range to LSP specification (zero-based)
     range = Range(
@@ -248,8 +248,7 @@ def pylsp_code_actions(
     range: Dict,
     context: Dict,
 ) -> List[Dict]:
-    """
-    Provide code actions through ruff.
+    """Provide code actions through ruff.
 
     Parameters
     ----------
@@ -267,6 +266,7 @@ def pylsp_code_actions(
     Returns
     -------
     List of dicts containing the code actions.
+
     """
     log.debug(f"textDocument/codeAction: {document} {range} {context}")
 
@@ -322,7 +322,7 @@ def pylsp_code_actions(
             ]
         )
 
-    if checks_with_fixes:
+    if any([c.fix.applicability == "safe" for c in checks_with_fixes]):  # type: ignore
         code_actions.append(
             create_fix_all_code_action(document=document, settings=settings),
         )
@@ -405,7 +405,7 @@ def create_fix_all_code_action(
     document: Document,
     settings: PluginSettings,
 ) -> CodeAction:
-    title = "Ruff: Fix All"
+    title = "Ruff: Fix All (safe fixes)"
     kind = CodeActionKind.SourceFixAll
 
     # No unsafe fixes for 'Fix all', see https://github.com/python-lsp/python-lsp-ruff/issues/55
@@ -487,8 +487,7 @@ def run_ruff(
     fix: bool = False,
     extra_arguments: Optional[List[str]] = None,
 ) -> str:
-    """
-    Run ruff on the given document and the given arguments.
+    """Run ruff on the given document and the given arguments.
 
     Parameters
     ----------
@@ -509,6 +508,7 @@ def run_ruff(
     Returns
     -------
     String containing the result in json format.
+
     """
     executable = settings.executable
 
@@ -545,8 +545,7 @@ def build_check_arguments(
     fix: bool = False,
     extra_arguments: Optional[List[str]] = None,
 ) -> List[str]:
-    """
-    Build arguments for ruff check.
+    """Build arguments for ruff check.
 
     Parameters
     ----------
@@ -562,6 +561,7 @@ def build_check_arguments(
     Returns
     -------
     List containing the arguments.
+
     """
     args = []
     # Suppress update announcements
@@ -631,8 +631,7 @@ def build_format_arguments(
     settings: PluginSettings,
     extra_arguments: Optional[List[str]] = None,
 ) -> List[str]:
-    """
-    Build arguments for ruff format.
+    """Build arguments for ruff format.
 
     Parameters
     ----------
@@ -646,6 +645,7 @@ def build_format_arguments(
     Returns
     -------
     List containing the arguments.
+
     """
     args = []
     # Suppress update announcements
@@ -681,8 +681,7 @@ def build_format_arguments(
 
 
 def load_settings(workspace: Workspace, document_path: str) -> PluginSettings:
-    """
-    Load settings from pyproject.toml file in the project path.
+    """Load settings from pyproject.toml file in the project path.
 
     Parameters
     ----------
@@ -694,6 +693,7 @@ def load_settings(workspace: Workspace, document_path: str) -> PluginSettings:
     Returns
     -------
     PluginSettings read via lsp.
+
     """
     config = workspace._config
     _plugin_settings = config.plugin_settings("ruff", document_path=document_path)
