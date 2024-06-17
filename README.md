@@ -95,3 +95,22 @@ To enable sorting of imports using ruff's isort functionality, add `"I"` to the 
 `python-lsp-ruff` supports code actions as given by possible fixes by `ruff`. `python-lsp-ruff` also supports [unsafe fixes](https://docs.astral.sh/ruff/linter/#fix-safety).
 Fixes considered unsafe by `ruff` are marked `(unsafe)` in the code action.
 The `Fix all` code action *only* consideres safe fixes.
+
+## Debugging
+
+The log level can be set via the `cmd` option of `pylsp`:
+
+```lua
+lspconfig.pylsp.setup {
+  cmd = {"pylsp", "-vvv", "--log-file", "/tmp/lsp.log"},
+  settings = {
+    pylsp = {
+      plugins = {
+        ruff = {
+          enabled = true,
+        },
+      }
+    }
+  }
+}
+```
