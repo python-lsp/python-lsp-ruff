@@ -210,7 +210,7 @@ def create_diagnostic(check: RuffCheck, settings: PluginSettings) -> Diagnostic:
     # Ruff intends to implement severity codes in the future,
     # see https://github.com/charliermarsh/ruff/issues/645.
     severity = DiagnosticSeverity.Warning
-    if check.code == "None" or check.code[0] == "F":
+    if check.code == "None" or check.code == "E999" or check.code[0] == "F":
         severity = DiagnosticSeverity.Error
 
     # Check if check.code starts contained in given severities
