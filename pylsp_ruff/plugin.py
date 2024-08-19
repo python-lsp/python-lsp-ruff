@@ -116,46 +116,48 @@ def pylsp_format_document(workspace: Workspace, document: Document) -> Generator
         Document to apply ruff on.
 
     """
-    log.debug(f"textDocument/formatting: {document}")
-    outcome = yield
-    result = outcome.get_result()
-    if result:
-        source = result[0]["newText"]
-    else:
-        source = document.source
 
-    settings = load_settings(workspace=workspace, document_path=document.path)
-    if not settings.format_enabled:
-        return
+    with workspace.report_progress("format: ruff"):
+        log.debug(f"textDocument/formatting: {document}")
+        outcome = yield
+        result = outcome.get_result()
+        if result:
+            source = result[0]["newText"]
+        else:
+            source = document.source
 
-    new_text = run_ruff_format(
-        settings=settings, document_path=document.path, document_source=source
-    )
+        settings = load_settings(workspace=workspace, document_path=document.path)
+        if not settings.format_enabled:
+            return
 
-    if settings.format:
-        # A second pass through the document with `ruff check` and only the rules
-        # enabled via the format config property. This allows for things like
-        # specifying `format = ["I"]` to get import sorting as part of formatting.
-        new_text = run_ruff(
-            settings=PluginSettings(
-                ignore=["ALL"], select=settings.format, executable=settings.executable
-            ),
-            document_path=document.path,
-            document_source=new_text,
-            fix=True,
+        new_text = run_ruff_format(
+            settings=settings, document_path=document.path, document_source=source
         )
 
-    # Avoid applying empty text edit
-    if not new_text or new_text == source:
-        return
+        if settings.format:
+            # A second pass through the document with `ruff check` and only the rules
+            # enabled via the format config property. This allows for things like
+            # specifying `format = ["I"]` to get import sorting as part of formatting.
+            new_text = run_ruff(
+                settings=PluginSettings(
+                    ignore=["ALL"], select=settings.format, executable=settings.executable
+                ),
+                document_path=document.path,
+                document_source=new_text,
+                fix=True,
+            )
 
-    range = Range(
-        start=Position(line=0, character=0),
-        end=Position(line=len(document.lines), character=0),
-    )
-    text_edit = TextEdit(range=range, new_text=new_text)
+        # Avoid applying empty text edit
+        if not new_text or new_text == source:
+            return
 
-    outcome.force_result(converter.unstructure([text_edit]))
+        range = Range(
+            start=Position(line=0, character=0),
+            end=Position(line=len(document.lines), character=0),
+        )
+        text_edit = TextEdit(range=range, new_text=new_text)
+
+        outcome.force_result(converter.unstructure([text_edit]))
 
 
 @hookimpl
@@ -174,10 +176,12 @@ def pylsp_lint(workspace: Workspace, document: Document) -> List[Dict]:
     List of dicts containing the diagnostics.
 
     """
-    settings = load_settings(workspace, document.path)
-    checks = run_ruff_check(document=document, settings=settings)
-    diagnostics = [create_diagnostic(check=c, settings=settings) for c in checks]
-    return converter.unstructure(diagnostics)
+
+    with workspace.report_progress("lint: ruff"):
+        settings = load_settings(workspace, document.path)
+        checks = run_ruff_check(document=document, settings=settings)
+        diagnostics = [create_diagnostic(check=c, settings=settings) for c in checks]
+        return converter.unstructure(diagnostics)
 
 
 def create_diagnostic(check: RuffCheck, settings: PluginSettings) -> Diagnostic:
