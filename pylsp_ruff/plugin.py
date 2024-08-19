@@ -117,19 +117,19 @@ def pylsp_format_document(workspace: Workspace, document: Document) -> Generator
 
     """
 
+    log.debug(f"textDocument/formatting: {document}")
+    outcome = yield
+    result = outcome.get_result()
+    if result:
+        source = result[0]["newText"]
+    else:
+        source = document.source
+
+    settings = load_settings(workspace=workspace, document_path=document.path)
+    if not settings.format_enabled:
+        return
+
     with workspace.report_progress("format: ruff"):
-        log.debug(f"textDocument/formatting: {document}")
-        outcome = yield
-        result = outcome.get_result()
-        if result:
-            source = result[0]["newText"]
-        else:
-            source = document.source
-
-        settings = load_settings(workspace=workspace, document_path=document.path)
-        if not settings.format_enabled:
-            return
-
         new_text = run_ruff_format(
             settings=settings, document_path=document.path, document_source=source
         )
