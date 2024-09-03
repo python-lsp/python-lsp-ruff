@@ -1,8 +1,11 @@
 import enum
+import importlib.util
 import json
 import logging
 import re
+import shutil
 import sys
+from functools import lru_cache
 from pathlib import PurePath
 from subprocess import PIPE, Popen
 from typing import Dict, Generator, List, Optional
@@ -116,7 +119,6 @@ def pylsp_format_document(workspace: Workspace, document: Document) -> Generator
         Document to apply ruff on.
 
     """
-
     log.debug(f"textDocument/formatting: {document}")
     outcome = yield
     result = outcome.get_result()
@@ -178,7 +180,6 @@ def pylsp_lint(workspace: Workspace, document: Document) -> List[Dict]:
     List of dicts containing the diagnostics.
 
     """
-
     with workspace.report_progress("lint: ruff"):
         settings = load_settings(workspace, document.path)
         checks = run_ruff_check(document=document, settings=settings)
@@ -487,6 +488,36 @@ def run_ruff_format(
     )
 
 
+@lru_cache
+def find_executable(executable) -> List[str]:
+    cmd = None
+    # use the explicit executable configuration
+    if executable is not None:
+        exe_path = shutil.which(executable)
+        if exe_path is not None:
+            cmd = [exe_path]
+        else:
+            raise RuntimeError(f"configured ruff executable not found: {executable!r}")
+
+    # try the python module
+    if cmd is None:
+        if importlib.util.find_spec("ruff") is not None:
+            cmd = [sys.executable, "-m", "ruff"]
+
+    # try system's ruff executable
+    if cmd is None:
+        system_exe = shutil.which("ruff")
+        if system_exe is not None:
+            cmd = [system_exe]
+
+    if cmd is None:
+        raise RuntimeError(
+            "no suitable ruff invocation could be found (executable, python module)"
+        )
+
+    return cmd
+
+
 def run_ruff(
     settings: PluginSettings,
     document_path: str,
@@ -522,27 +553,14 @@ def run_ruff(
 
     arguments = subcommand.build_args(document_path, settings, fix, extra_arguments)
 
-    p = None
-    if executable is not None:
-        log.debug(f"Calling {executable} with args: {arguments} on '{document_path}'")
-        try:
-            cmd = [executable, str(subcommand)]
-            cmd.extend(arguments)
-            p = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-        except Exception:
-            log.error(f"Can't execute ruff with given executable '{executable}'.")
-    if p is None:
-        log.debug(
-            f"Calling ruff via '{sys.executable} -m ruff'"
-            f" with args: {arguments} on '{document_path}'"
-        )
-        cmd = [sys.executable, "-m", "ruff", str(subcommand)]
-        cmd.extend(arguments)
-        p = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    cmd = [*find_executable(executable), str(subcommand), *arguments]
+
+    log.debug(f"Calling {cmd} on '{document_path}'")
+    p = Popen(cmd, stdin=PIPE, stdout=PIPE)
     (stdout, stderr) = p.communicate(document_source.encode())
 
     if p.returncode != 0:
-        log.error(f"Error running ruff: {stderr.decode()}")
+        log.error(f"Ruff returned {p.returncode} != 0")
 
     return stdout.decode()
 
