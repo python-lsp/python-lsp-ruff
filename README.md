@@ -40,6 +40,9 @@ file is present in the project, `python-lsp-ruff` will ignore specific options (
 The plugin follows [python-lsp-server's configuration](https://github.com/python-lsp/python-lsp-server/#configuration).
 This example configuration using for `neovim` shows the possible options:
 
+<details open>
+<summary>Lua</summary>
+
 ```lua
 pylsp = {
   plugins = {
@@ -66,6 +69,42 @@ pylsp = {
   }
 }
 ```
+</details>
+
+<details>
+<summary>JSON</summary>
+
+```
+{
+  "pylsp": {
+    "plugins": {
+      "ruff": {
+        "enabled": true,
+        "formatEnabled": true,
+        "executable": "<path-to-ruff-bin>",
+        "config": "<path_to_custom_ruff_toml>",
+        "extendSelect": [ "I" ],
+        "extendIgnore": [ "C90"],
+        "format": [ "I" ],
+        "severities": {
+          "D212": "I"
+        },
+        "unsafeFixes": false,
+        "lineLength": 88,
+        "exclude": ["__about__.py"],
+        "select": ["F"],
+        "ignore": ["D210"],
+        "perFileIgnores": {
+          "__init__.py": "CPY001"
+        },
+        "preview": false,
+        "targetVersion": "py310"
+      }
+    }
+  }
+}
+```
+</details>
 
 For more information on the configuration visit [Ruff's homepage](https://beta.ruff.rs/docs/configuration/).
 
