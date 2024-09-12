@@ -497,7 +497,7 @@ def find_executable(executable) -> List[str]:
         if exe_path is not None:
             cmd = [exe_path]
         else:
-            raise RuntimeError(f"configured ruff executable not found: {executable!r}")
+            log.error(f"Configured ruff executable not found: {executable!r}")
 
     # try the python module
     if cmd is None:
@@ -511,9 +511,10 @@ def find_executable(executable) -> List[str]:
             cmd = [system_exe]
 
     if cmd is None:
-        raise RuntimeError(
-            "no suitable ruff invocation could be found (executable, python module)"
+        log.error(
+            "No suitable ruff invocation could be found (executable, python module)."
         )
+        cmd = []
 
     return cmd
 
@@ -557,7 +558,7 @@ def run_ruff(
 
     log.debug(f"Calling {cmd} on '{document_path}'")
     p = Popen(cmd, stdin=PIPE, stdout=PIPE)
-    (stdout, stderr) = p.communicate(document_source.encode())
+    (stdout, _) = p.communicate(document_source.encode())
 
     if p.returncode != 0:
         log.error(f"Ruff returned {p.returncode} != 0")
