@@ -2,6 +2,7 @@
 # Copyright 2021- Python Language Server Contributors.
 
 import os
+import stat
 import sys
 import tempfile
 from unittest.mock import Mock, patch
@@ -100,17 +101,24 @@ def test_ruff_config_param(workspace):
 
 def test_ruff_executable_param(workspace):
     with patch("pylsp_ruff.plugin.Popen") as popen_mock:
-        mock_instance = popen_mock.return_value
-        mock_instance.communicate.return_value = [bytes(), bytes()]
+        with tempfile.NamedTemporaryFile() as ruff_exe:
+            mock_instance = popen_mock.return_value
+            mock_instance.communicate.return_value = [bytes(), bytes()]
 
-        ruff_executable = "/tmp/ruff"
-        workspace._config.update({"plugins": {"ruff": {"executable": ruff_executable}}})
+            ruff_executable = ruff_exe.name
+            # chmod +x the file
+            st = os.stat(ruff_executable)
+            os.chmod(ruff_executable, st.st_mode | stat.S_IEXEC)
 
-        _name, doc = temp_document(DOC, workspace)
-        ruff_lint.pylsp_lint(workspace, doc)
+            workspace._config.update(
+                {"plugins": {"ruff": {"executable": ruff_executable}}}
+            )
 
-        (call_args,) = popen_mock.call_args[0]
-        assert ruff_executable in call_args
+            _name, doc = temp_document(DOC, workspace)
+            ruff_lint.pylsp_lint(workspace, doc)
+
+            (call_args,) = popen_mock.call_args[0]
+            assert ruff_executable in call_args
 
 
 def get_ruff_settings(workspace, doc, config_str):
