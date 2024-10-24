@@ -142,7 +142,7 @@ def pylsp_format_document(workspace: Workspace, document: Document) -> Generator
             # specifying `format = ["I"]` to get import sorting as part of formatting.
             new_text = run_ruff(
                 settings=PluginSettings(
-                    ignore=["ALL"],
+                    ignore=["ALL"] if "ALL" not in settings.format else [],
                     select=settings.format,
                     executable=settings.executable,
                 ),
