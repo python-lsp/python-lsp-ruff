@@ -7,8 +7,15 @@ import shutil
 import sys
 from functools import lru_cache
 from pathlib import PurePath
-from subprocess import CREATE_NO_WINDOW, PIPE, Popen
+from subprocess import PIPE, Popen
 from typing import Dict, Generator, List, Optional
+
+if sys.platform == "win32":
+    from subprocess import CREATE_NO_WINDOW
+else:
+    # CREATE_NO_WINDOW flag only available on Windows.
+    # Set constant as default `Popen` `creationflag` kwarg value (`0`)
+    CREATE_NO_WINDOW = 0
 
 if sys.version_info >= (3, 11):
     import tomllib
