@@ -7,7 +7,7 @@ import shutil
 import sys
 from functools import lru_cache
 from pathlib import PurePath
-from subprocess import PIPE, Popen
+from subprocess import CREATE_NO_WINDOW, PIPE, Popen
 from typing import Dict, Generator, List, Optional
 
 if sys.version_info >= (3, 11):
@@ -502,7 +502,7 @@ def find_executable(executable) -> List[str]:
     # try the python module
     if cmd is None:
         if importlib.util.find_spec("ruff") is not None:
-            cmd = [sys.executable, "-m", "ruff"]
+            cmd = [sys.executable.replace("pythonw", "python"), "-m", "ruff"]
 
     # try system's ruff executable
     if cmd is None:
@@ -557,7 +557,7 @@ def run_ruff(
     cmd = [*find_executable(executable), str(subcommand), *arguments]
 
     log.debug(f"Calling {cmd} on '{document_path}'")
-    p = Popen(cmd, stdin=PIPE, stdout=PIPE)
+    p = Popen(cmd, stdin=PIPE, stdout=PIPE, creationflags=CREATE_NO_WINDOW)
     (stdout, _) = p.communicate(document_source.encode())
 
     if p.returncode != 0:
