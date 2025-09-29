@@ -59,6 +59,7 @@ pylsp = {
       format = { "I" },  -- Rules that are marked as fixable by ruff that should be fixed when running textDocument/formatting
       severities = { ["D212"] = "I" },  -- Optional table of rules where a custom severity is desired
       unsafeFixes = false,  -- Whether or not to offer unsafe fixes as code actions. Ignored with the "Fix All" action
+      unfixable = { "F401" }, -- Rules that are excluded when checking the code actions (including the "Fix All" action)
 
       -- Rules that are ignored when a pyproject.toml or ruff.toml is present:
       lineLength = 88,  -- Line length to pass to ruff checking and formatting
@@ -93,6 +94,7 @@ pylsp = {
           "D212": "I"
         },
         "unsafeFixes": false,
+        "unfixable": [ "F401" ],
         "lineLength": 88,
         "exclude": ["__about__.py"],
         "select": ["F"],
@@ -143,7 +145,7 @@ The `Fix all` code action *only* consideres safe fixes.
 The log level can be set via the `cmd` option of `pylsp`:
 
 ```lua
-lspconfig.pylsp.setup {
+vim.lsp.config("pylsp",  {
   cmd = {"pylsp", "-vvv", "--log-file", "/tmp/lsp.log"},
   settings = {
     pylsp = {
@@ -154,5 +156,5 @@ lspconfig.pylsp.setup {
       }
     }
   }
-}
+})
 ```

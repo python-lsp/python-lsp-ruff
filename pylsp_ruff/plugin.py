@@ -628,6 +628,9 @@ def build_check_arguments(
     if settings.unsafe_fixes:
         args.append("--unsafe-fixes")
 
+    if settings.unfixable:
+        args.append(f"--unfixable={','.join(settings.unfixable)}")
+
     if settings.exclude:
         args.append(f"--exclude={','.join(settings.exclude)}")
 
@@ -730,8 +733,8 @@ def load_settings(workspace: Workspace, document_path: str) -> PluginSettings:
 
     """
     config = workspace._config
-    _plugin_settings = config.plugin_settings("ruff", document_path=document_path)
-    plugin_settings = converter.structure(_plugin_settings, PluginSettings)
+    plugin_settings = config.plugin_settings("ruff", document_path=document_path)
+    plugin_settings = converter.structure(plugin_settings, PluginSettings)
 
     pyproject_file = find_parents(
         workspace.root_path, document_path, ["pyproject.toml"]
@@ -764,6 +767,7 @@ def load_settings(workspace: Workspace, document_path: str) -> PluginSettings:
             extend_select=plugin_settings.extend_select,
             format=plugin_settings.format,
             severities=plugin_settings.severities,
+            unfixable=plugin_settings.unfixable,
         )
 
     return plugin_settings

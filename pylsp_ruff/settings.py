@@ -27,6 +27,8 @@ class PluginSettings:
     preview: bool = False
     unsafe_fixes: bool = False
 
+    unfixable: Optional[List[str]] = None
+
     severities: Optional[Dict[str, str]] = None
 
     target_version: Optional[str] = None
