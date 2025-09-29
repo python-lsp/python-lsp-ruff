@@ -4,3 +4,5 @@ __pycache__/
 *.swp
 tags
 /build/
+
+.spyproject/

@@ -10,6 +10,13 @@ from pathlib import PurePath
 from subprocess import PIPE, Popen
 from typing import Dict, Generator, List, Optional
 
+if sys.platform == "win32":
+    from subprocess import CREATE_NO_WINDOW
+else:
+    # CREATE_NO_WINDOW flag only available on Windows.
+    # Set constant as default `Popen` `creationflag` kwarg value (`0`)
+    CREATE_NO_WINDOW = 0
+
 if sys.version_info >= (3, 11):
     import tomllib
 else:
@@ -502,7 +509,7 @@ def find_executable(executable) -> List[str]:
     # try the python module
     if cmd is None:
         if importlib.util.find_spec("ruff") is not None:
-            cmd = [sys.executable, "-m", "ruff"]
+            cmd = [sys.executable.replace("pythonw", "python"), "-m", "ruff"]
 
     # try system's ruff executable
     if cmd is None:
@@ -557,7 +564,7 @@ def run_ruff(
     cmd = [*find_executable(executable), str(subcommand), *arguments]
 
     log.debug(f"Calling {cmd} on '{document_path}'")
-    p = Popen(cmd, stdin=PIPE, stdout=PIPE)
+    p = Popen(cmd, stdin=PIPE, stdout=PIPE, creationflags=CREATE_NO_WINDOW)
     (stdout, _) = p.communicate(document_source.encode())
 
     if p.returncode != 0:

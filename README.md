@@ -4,8 +4,11 @@
 [![Anaconda](https://anaconda.org/conda-forge/python-lsp-ruff/badges/version.svg)](https://anaconda.org/conda-forge/python-lsp-ruff)
 [![Python](https://github.com/python-lsp/python-lsp-ruff/actions/workflows/python.yml/badge.svg)](https://github.com/python-lsp/python-lsp-ruff/actions/workflows/python.yml)
 
-`python-lsp-ruff` is a plugin for `python-lsp-server` that adds linting, code action and formatting capabilities that are provided by [ruff](https://github.com/charliermarsh/ruff),
+`python-lsp-ruff` is a plugin for `python-lsp-server` that adds **linting**, **code actions** and **formatting** capabilities that are provided by [ruff](https://github.com/charliermarsh/ruff),
 an extremely fast Python linter and formatter written in Rust.
+
+Note that `ruff>0.4.5` ships with a built-in LSP server (and `ruff-lsp` before that), which allows linting, formatting and code actions.
+In contrast, this implementation adds `ruff` as a plugin for `pylsp` in addition to `pylsp`'s other functionalities (go-to support, ...).
 
 ## Install
 
