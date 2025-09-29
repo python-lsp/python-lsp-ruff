@@ -50,6 +50,14 @@ codeactions = [
     "Ruff: Fix All (safe fixes)",
 ]
 
+codeactions_unfixable = [
+    "Ruff (F401): Remove unused import: `os`",
+    "Ruff (F401): Disable for this line",
+    # "Ruff (F841): Remove assignment to unused variable `a` (unsafe)",
+    "Ruff (F841): Disable for this line",
+    "Ruff: Fix All (safe fixes)",
+]
+
 codeactions_import = [
     "Ruff: Organize imports",
     "Ruff: Fix All (safe fixes)",
@@ -83,6 +91,24 @@ def test_ruff_code_actions(workspace):
     actions = converter.structure(actions, List[CodeAction])
     action_titles = list(map(lambda action: action.title, actions))
     assert sorted(codeactions) == sorted(action_titles)
+
+
+def test_ruff_code_actions_unfixable(workspace):
+    _, doc = temp_document(codeaction_str, workspace)
+
+    workspace._config.update(
+        {"plugins": {"ruff": {"select": ["F"], "unfixable": ["F841"]}}}
+    )
+    diags = ruff_lint.pylsp_lint(workspace, doc)
+    range_ = cattrs.unstructure(
+        Range(start=Position(line=0, character=0), end=Position(line=0, character=0))
+    )
+    actions = ruff_lint.pylsp_code_actions(
+        workspace._config, workspace, doc, range=range_, context={"diagnostics": diags}
+    )
+    actions = converter.structure(actions, List[CodeAction])
+    action_titles = list(map(lambda action: action.title, actions))
+    assert sorted(codeactions_unfixable) == sorted(action_titles)
 
 
 def test_import_action(workspace):

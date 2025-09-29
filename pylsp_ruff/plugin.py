@@ -760,6 +760,7 @@ def load_settings(workspace: Workspace, document_path: str) -> PluginSettings:
             extend_select=plugin_settings.extend_select,
             format=plugin_settings.format,
             severities=plugin_settings.severities,
+            unfixable=plugin_settings.unfixable,
         )
 
     return plugin_settings

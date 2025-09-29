@@ -91,6 +91,7 @@ pylsp = {
           "D212": "I"
         },
         "unsafeFixes": false,
+        "unfixable": [ "F401" ],
         "lineLength": 88,
         "exclude": ["__about__.py"],
         "select": ["F"],
