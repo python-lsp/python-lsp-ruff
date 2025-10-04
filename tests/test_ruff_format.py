@@ -19,6 +19,12 @@ _UNSORTED_IMPORTS = tw.dedent(
     """
 ).strip()
 
+_UNUSED_IMPORTS = tw.dedent(
+    """
+    import unused_import
+    """
+).strip()
+
 _SORTED_IMPORTS = tw.dedent(
     """
     import asyncio
@@ -30,19 +36,19 @@ _SORTED_IMPORTS = tw.dedent(
 
 _UNFORMATTED_CODE = tw.dedent(
     """
-    def foo(): pass
-    def bar(): pass
+    def foo(): return asyncio.subprocess.DEVNULL
+    def bar(): return x(io.DEFAULT_BUFFER_SIZE)
     """
 ).strip()
 
 _FORMATTED_CODE = tw.dedent(
     """
     def foo():
-        pass
+        return asyncio.subprocess.DEVNULL
 
 
     def bar():
-        pass
+        return x(io.DEFAULT_BUFFER_SIZE)
     """
 ).strip()
 
@@ -115,6 +121,25 @@ def test_ruff_format_and_sort_imports(workspace):
             "plugins": {
                 "ruff": {
                     "format": ["I001"],
+                }
+            }
+        }
+    )
+    got = run_plugin_format(workspace, doc)
+    assert want == got
+
+
+def test_ruff_format_via_all(workspace):
+    # If `pylsp.plugins.ruff.format` contains "ALL", formatting should apply
+    # the automatic fixes for unsorted-imports (I001) and unused-import (F401)
+    txt = f"{_UNUSED_IMPORTS}\n{_UNSORTED_IMPORTS}\n{_UNFORMATTED_CODE}"
+    want = f"{_SORTED_IMPORTS}\n\n\n{_FORMATTED_CODE}\n"
+    _, doc = temp_document(txt, workspace)
+    workspace._config.update(
+        {
+            "plugins": {
+                "ruff": {
+                    "format": ["ALL"],
                 }
             }
         }
