@@ -24,6 +24,10 @@ def using_const():
     return t
 """
 
+DOC_INVALID = r"""
+a = 
+"""
+
 
 @pytest.fixture()
 def workspace(tmp_path):
@@ -70,6 +74,24 @@ def test_ruff_lint(workspace):
         assert unused_var["range"]["end"] == {"line": 5, "character": 5}
         assert unused_var["severity"] == lsp.DiagnosticSeverity.Error
         assert unused_var["tags"] == [lsp.DiagnosticTag.Unnecessary]
+    finally:
+        os.remove(name)
+
+
+def test_ruff_invalid(workspace):
+    name, doc = temp_document(DOC_INVALID, workspace)
+    try:
+        diags = ruff_lint.pylsp_lint(workspace, doc)
+        assert len(diags) == 1
+        diag = diags[0]
+
+        assert diag["source"] == "ruff"
+        assert diag["code"] == "invalid-syntax"
+        assert diag["message"] == "Expected an expression"
+        assert diag["range"]["start"] == {"line": 1, "character": 4}
+        assert diag["range"]["end"] == {"line": 2, "character": 0}
+        assert diag["severity"] == lsp.DiagnosticSeverity.Error
+        assert diag["tags"] == []
     finally:
         os.remove(name)
 
@@ -268,7 +290,7 @@ def f():
 
     diags = ruff_lint.pylsp_lint(workspace, doc)
     diag_codes = [diag["code"] for diag in diags]
-    assert "E999" not in diag_codes
+    assert "invalid-syntax" not in diag_codes
     assert "E402" in diag_codes
     assert "F401" in diag_codes
     assert "F841" in diag_codes
