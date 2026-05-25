@@ -69,6 +69,7 @@ pylsp = {
       perFileIgnores = { ["__init__.py"] = "CPY001" },  -- Rules that should be ignored for specific files
       preview = false,  -- Whether to enable the preview style linting and formatting.
       targetVersion = "py310",  -- The minimum python version to target (applies for both linting and formatting).
+      virtualDocumentsDir = ".virtual_documents",  -- If using JupyterLab, point to the location of the virtual documents directory.
     },
   }
 }
@@ -104,6 +105,7 @@ pylsp = {
         },
         "preview": false,
         "targetVersion": "py310"
+        "virtualDocumentsDir": ".virtual_documents",
       }
     }
   }
