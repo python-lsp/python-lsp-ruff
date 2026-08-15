@@ -160,12 +160,13 @@ def get_ruff_settings(workspace, doc, config_str):
 
 def test_ruff_settings(workspace):
     config_str = r"""[tool.ruff]
+select = ["E402", "F401", "F841"]
 ignore = ["F841"]
 exclude = [
     "blah/__init__.py",
     "file_2.py"
 ]
-extend-select = ["D"]
+extend-select = ["D103", "D104"]
 [tool.ruff.per-file-ignores]
 "test_something.py" = ["F401"]
 """
@@ -277,6 +278,11 @@ def f():
 
 
 def test_notebook_input(workspace):
+    # Explicitly enable the rules we're expecting to find.
+    workspace._config.update(
+        {"plugins": {"ruff": {"select": ["E402", "F401", "F841"]}}}
+    )
+
     doc_str = r"""
 print('hi')
 import os
