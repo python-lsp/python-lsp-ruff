@@ -5,6 +5,12 @@ on:
     tags:
       - "v*"
 
+  # Rerun workflow manually if the publish fails without new tag
+  workflow_dispatch:
+      
+permissions:
+  contents: read
+
 jobs:
   build:
     name: Build distributions
@@ -12,24 +18,27 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
-          python-version: "3.12"
+          python-version: "3.x"
 
       - name: Install build
-        run: python -m pip install build
+        run: python3 -m pip install --upgrade build
 
       - name: Build distributions
-        run: python -m build
+        run: python3 -m build
 
       - name: Upload distributions
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: distributions
           path: dist/
+          if-no-files-found: error
 
   publish:
     name: Publish to PyPI
@@ -38,13 +47,14 @@ jobs:
 
     environment:
       name: release
+      url: "https://pypi.org/project/python-lsp-ruff"
 
     permissions:
       id-token: write
 
     steps:
       - name: Download distributions
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: distributions
           path: dist/
