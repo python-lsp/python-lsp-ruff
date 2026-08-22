@@ -5,12 +5,11 @@ import os
 import stat
 import sys
 import tempfile
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
-import pytest
 from pylsp import lsp, uris
-from pylsp.config.config import Config
-from pylsp.workspace import Document, Workspace
+from pylsp.workspace import Document
+from conftest import temp_document
 
 import pylsp_ruff.plugin as ruff_lint
 
@@ -27,24 +26,6 @@ def using_const():
 DOC_INVALID = r"""
 a = 
 """
-
-
-@pytest.fixture()
-def workspace(tmp_path):
-    """Return a workspace."""
-    ws = Workspace(tmp_path.absolute().as_uri(), Mock())
-    ws._config = Config(ws.root_uri, {}, 0, {})
-    return ws
-
-
-def temp_document(doc_text, workspace):
-    with tempfile.NamedTemporaryFile(
-        mode="w", dir=workspace.root_path, delete=False
-    ) as temp_file:
-        name = temp_file.name
-        temp_file.write(doc_text)
-    doc = Document(uris.from_fs_path(name), workspace)
-    return name, doc
 
 
 def test_ruff_unsaved(workspace):
@@ -275,6 +256,38 @@ def f():
         assert diag["code"] != "F401"
 
     os.unlink(os.path.join(workspace.root_path, "pyproject.toml"))
+
+
+def test_strip_virtual_documents_path_no_match():
+    path = "/work/foo/bar.py"
+    assert ruff_lint.strip_virtual_documents_path(path, ".virtual_documents") == path
+
+
+def test_strip_virtual_documents_path_empty():
+    path = "/work/.virtual_documents/foo/bar.ipynb"
+    assert ruff_lint.strip_virtual_documents_path(path, None) == path
+    assert ruff_lint.strip_virtual_documents_path(path, "") == path
+
+
+def test_ruff_lint_strips_virtual_documents_path(notebook_workspace):
+    virtual_path = os.path.join(
+        notebook_workspace.root_path, ".virtual_documents", "foo", "bar.ipynb"
+    )
+    expected_stripped = os.path.join(notebook_workspace.root_path, "foo", "bar.ipynb")
+    doc_uri = uris.from_fs_path(virtual_path)
+    notebook_workspace.put_document(doc_uri, "import os\n")
+    doc = notebook_workspace.get_document(doc_uri)
+
+    with patch("pylsp_ruff.plugin.Popen") as popen_mock:
+        mock_instance = popen_mock.return_value
+        mock_instance.communicate.return_value = [bytes(), bytes()]
+        ruff_lint.pylsp_lint(notebook_workspace, doc)
+
+    (call_args,) = popen_mock.call_args[0]
+    assert f"--stdin-filename={expected_stripped}" in call_args
+    assert (
+        f"--stdin-filename={virtual_path}" not in call_args
+    ), "virtual_documents prefix was not stripped"
 
 
 def test_notebook_input(workspace):

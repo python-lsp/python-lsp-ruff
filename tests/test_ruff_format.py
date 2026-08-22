@@ -1,12 +1,11 @@
 import contextlib
-import tempfile
+import os
 import textwrap as tw
 from typing import Any, List, Mapping, Optional
-from unittest.mock import Mock
+from unittest.mock import patch
 
-import pytest
+from conftest import temp_document
 from pylsp import uris
-from pylsp.config.config import Config
 from pylsp.workspace import Document, Workspace
 
 import pylsp_ruff.plugin as plugin
@@ -45,24 +44,6 @@ _FORMATTED_CODE = tw.dedent(
         pass
     """
 ).strip()
-
-
-@pytest.fixture()
-def workspace(tmp_path):
-    """Return a workspace."""
-    ws = Workspace(tmp_path.absolute().as_uri(), Mock())
-    ws._config = Config(ws.root_uri, {}, 0, {})
-    return ws
-
-
-def temp_document(doc_text, workspace):
-    with tempfile.NamedTemporaryFile(
-        mode="w", dir=workspace.root_path, delete=False
-    ) as temp_file:
-        name = temp_file.name
-        temp_file.write(doc_text)
-    doc = Document(uris.from_fs_path(name), workspace)
-    return name, doc
 
 
 def run_plugin_format(workspace: Workspace, doc: Document) -> str:
@@ -104,6 +85,29 @@ def test_ruff_format_disabled(workspace):
     )
     got = run_plugin_format(workspace, doc)
     assert got == ""
+
+
+def test_ruff_format_strips_virtual_documents_path(notebook_workspace):
+    virtual_path = os.path.join(
+        notebook_workspace.root_path, ".virtual_documents", "foo", "bar.ipynb"
+    )
+    expected_stripped = os.path.join(notebook_workspace.root_path, "foo", "bar.ipynb")
+    doc_uri = uris.from_fs_path(virtual_path)
+    notebook_workspace.put_document(doc_uri, _UNFORMATTED_CODE)
+    doc = notebook_workspace.get_document(doc_uri)
+
+    with patch("pylsp_ruff.plugin.Popen") as popen_mock:
+        mock_instance = popen_mock.return_value
+        mock_instance.communicate.return_value = [bytes(), bytes()]
+        run_plugin_format(notebook_workspace, doc)
+
+    format_calls = [
+        call for call in popen_mock.call_args_list if "format" in call[0][0]
+    ]
+    assert format_calls, "ruff format was not invoked"
+    cmd = format_calls[0][0][0]
+    assert f"--stdin-filename={expected_stripped}" in cmd
+    assert f"--stdin-filename={virtual_path}" not in cmd
 
 
 def test_ruff_format_and_sort_imports(workspace):
