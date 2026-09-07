@@ -52,6 +52,7 @@ def workspace(tmp_path):
     """Return a workspace."""
     ws = Workspace(tmp_path.absolute().as_uri(), Mock())
     ws._config = Config(ws.root_uri, {}, 0, {})
+    ws._config.update({"plugins": {"ruff": {"isolated": True}}})
     return ws
 
 
@@ -100,7 +101,11 @@ def test_ruff_format_only(workspace):
 def test_ruff_format_disabled(workspace):
     _, doc = temp_document(_UNFORMATTED_CODE, workspace)
     workspace._config.update(
-        {"plugins": {"ruff": {"format": ["I001"], "formatEnabled": False}}}
+        {
+            "plugins": {
+                "ruff": {"isolated": True, "format": ["I001"], "formatEnabled": False}
+            }
+        }
     )
     got = run_plugin_format(workspace, doc)
     assert got == ""
@@ -114,6 +119,7 @@ def test_ruff_format_and_sort_imports(workspace):
         {
             "plugins": {
                 "ruff": {
+                    "isolated": True,
                     "format": ["I001"],
                 }
             }

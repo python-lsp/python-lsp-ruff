@@ -655,6 +655,9 @@ def build_check_arguments(
                 continue
             args.append(f"--ignore={','.join(errors)}")
 
+    if settings.isolated:
+        args.append("--isolated")
+
     if extra_arguments:
         args.extend(extra_arguments)
 
@@ -708,6 +711,9 @@ def build_format_arguments(
 
     if settings.target_version:
         args.append(f"--target-version={settings.target_version}")
+
+    if settings.isolated:
+        args.append("--isolated")
 
     if extra_arguments:
         args.extend(extra_arguments)

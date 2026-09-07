@@ -33,6 +33,9 @@ class PluginSettings:
 
     target_version: Optional[str] = None
 
+    # For testing only
+    isolated: bool = False
+
 
 def to_camel_case(snake_str: str) -> str:
     components = snake_str.split("_")
