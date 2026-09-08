@@ -34,6 +34,7 @@ def workspace(tmp_path):
     """Return a workspace."""
     ws = Workspace(tmp_path.absolute().as_uri(), Mock())
     ws._config = Config(ws.root_uri, {}, 0, {})
+    ws._config.update({"plugins": {"ruff": {"isolated": True}}})
     return ws
 
 

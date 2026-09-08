@@ -24,6 +24,7 @@ def workspace(tmp_path):
     """Return a workspace."""
     ws = Workspace(tmp_path.absolute().as_uri(), Mock())
     ws._config = Config(ws.root_uri, {}, 0, {})
+    ws._config.update({"plugins": {"ruff": {"isolated": True}}})
     return ws
 
 
@@ -79,7 +80,7 @@ def test_ruff_code_actions(workspace):
     _, doc = temp_document(codeaction_str, workspace)
 
     workspace._config.update(
-        {"plugins": {"ruff": {"select": ["F"], "unsafeFixes": True}}}
+        {"plugins": {"ruff": {"isolated": True, "select": ["F"], "unsafeFixes": True}}}
     )
     diags = ruff_lint.pylsp_lint(workspace, doc)
     range_ = cattrs.unstructure(
@@ -97,7 +98,11 @@ def test_ruff_code_actions_unfixable(workspace):
     _, doc = temp_document(codeaction_str, workspace)
 
     workspace._config.update(
-        {"plugins": {"ruff": {"select": ["F"], "unfixable": ["F841"]}}}
+        {
+            "plugins": {
+                "ruff": {"isolated": True, "select": ["F"], "unfixable": ["F841"]}
+            }
+        }
     )
     diags = ruff_lint.pylsp_lint(workspace, doc)
     range_ = cattrs.unstructure(
@@ -116,6 +121,7 @@ def test_import_action(workspace):
         {
             "plugins": {
                 "ruff": {
+                    "isolated": True,
                     "extendSelect": ["I"],
                     "extendIgnore": ["F"],
                 }
@@ -153,6 +159,7 @@ def test_fix_all(workspace):
         {
             "plugins": {
                 "ruff": {
+                    "isolated": True,
                     "unsafeFixes": True,
                 }
             }
@@ -167,6 +174,7 @@ def test_fix_all(workspace):
         {
             "plugins": {
                 "ruff": {
+                    "isolated": True,
                     "unsafeFixes": False,
                 }
             }
